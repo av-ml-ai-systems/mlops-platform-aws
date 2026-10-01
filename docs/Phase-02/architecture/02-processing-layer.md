@@ -1,283 +1,804 @@
-# Processing Layer Architecture
+# Processing Layer
 
-## 1. Overview
+## 1. Purpose
 
-The Processing Layer is responsible for transforming enterprise datasets into reproducible, training-ready datasets.
+The Processing Layer transforms data from the Data Lake into standardized, curated, and training-ready datasets.
 
-This layer separates data preparation from model training by executing preprocessing, validation, feature preparation, and quality checks independently of the training process.
+Its primary responsibility is to apply controlled data transformations while maintaining:
 
-Within AWS, these responsibilities are implemented using Amazon SageMaker Processing Jobs. Processing Jobs provide a scalable, reproducible, and production-ready mechanism for executing data engineering workflows while preserving complete separation between data preparation and model training.
+* Reproducibility
+* Data quality
+* Dataset lineage
+* Versioning
+* Separation of responsibilities
+* Training and inference consistency
 
-The Processing Layer represents the bridge between the AWS Data Platform and the Model Training Platform.
+The Processing Layer is divided into two main responsibilities:
 
----
-
-# 2. Architectural Goals
-
-The Processing Layer has the following objectives:
-
-- Separate preprocessing from model training.
-- Produce reproducible training datasets.
-- Execute scalable data transformations.
-- Perform dataset validation before training.
-- Guarantee feature consistency.
-- Preserve complete data lineage.
-- Version processed datasets.
-- Prepare datasets for enterprise training workflows.
-
----
-
-# 3. Position Inside the Enterprise ML Platform
-
-The Processing Layer consumes validated datasets from the AWS Data Platform and produces standardized datasets for the training platform.
-
+```text
+Data Engineering
+        │
+        ▼
+     AWS Glue
+        │
+        ▼
+Standardized / Curated Data
+        │
+        ▼
+ML-Specific Processing
+        │
+        ▼
+SageMaker Processing
+        │
+        ▼
+Training-Ready Data
 ```
+
+This separation prevents data engineering transformations from becoming tightly coupled to machine-learning training workflows.
+
+---
+
+## 2. Processing Layer Position
+
+The Processing Layer sits between the S3 Data Lake and the ML Training Layer.
+
+```text
+Data Sources
+      │
+      ▼
 Amazon S3 Data Lake
-        │
-        ▼
-AWS Glue Data Catalog
-        │
-        ▼
-Amazon Athena
-        │
-        ▼
-SageMaker Processing Jobs
-        │
-        ▼
-Training-Ready Dataset
-        │
-        ▼
-Model Training Platform
-```
-
-The Processing Layer ensures that every dataset entering model training satisfies the organization's quality, governance, and reproducibility standards.
-
----
-
-# 4. SageMaker Processing Jobs
-
-Amazon SageMaker Processing Jobs execute reproducible data engineering workflows inside managed compute environments.
-
-Unlike model training jobs, Processing Jobs focus exclusively on preparing data.
-
-Typical responsibilities include:
-
-- Data cleaning.
-- Missing value handling.
-- Feature preparation.
-- Schema validation.
-- Dataset validation.
-- Data quality verification.
-- Dataset transformation.
-- Export of processed datasets.
-
-Processing Jobs produce datasets that are ready to be consumed by the training platform.
-
----
-
-# 5. Inputs
-
-The Processing Layer consumes datasets that have already been registered and validated.
-
-Typical inputs include:
-
-- Raw datasets.
-- Processed datasets from Phase 1.
-- Metadata from the AWS Glue Data Catalog.
-- Validation results from Amazon Athena.
-- Dataset version information.
-
-These inputs originate from the enterprise Data Lake and remain fully version-controlled throughout the machine learning lifecycle.
-
----
-
-# 6. Outputs
-
-The Processing Layer generates standardized artifacts that will be consumed during model training.
-
-Typical outputs include:
-
-- Cleaned datasets.
-- Training-ready datasets.
-- Validation reports.
-- Feature datasets.
-- Processing logs.
-- Dataset metadata.
-- Updated dataset versions.
-
-All generated artifacts are stored in Amazon S3 and become part of the enterprise data lineage.
-
----
-
-# 7. Processing Workflow
-
-The Processing Layer follows the workflow below.
-
-```
-Validated Dataset
-        │
-        ▼
-Load Dataset
-        │
-        ▼
-Schema Validation
-        │
-        ▼
-Data Quality Checks
-        │
-        ▼
-Feature Preparation
-        │
-        ▼
+      │
+      ▼
+AWS Glue
+      │
+      ├── Standardization
+      ├── Domain Processing
+      └── Data Integration
+      │
+      ▼
+Curated Dataset
+      │
+      ▼
 Dataset Validation
-        │
-        ▼
+      │
+      ▼
+SageMaker Processing
+      │
+      ├── ML Preprocessing
+      ├── Feature Preparation
+      └── Training Dataset Preparation
+      │
+      ▼
 Training-Ready Dataset
+      │
+      ▼
+SageMaker Training
+```
+
+The Processing Layer therefore provides the controlled transition from source-oriented data to ML-ready data.
+
+---
+
+## 3. Processing Responsibilities
+
+The Processing Layer is responsible for transformations required before model training.
+
+These responsibilities are divided between AWS Glue and SageMaker Processing.
+
+### AWS Glue
+
+AWS Glue is responsible primarily for data engineering activities:
+
+* Schema standardization
+* Data-type normalization
+* Structural transformations
+* Domain-level processing
+* Domain dataset preparation
+* Cross-domain integration
+* Large-scale data transformations
+* Data Catalog integration
+
+### SageMaker Processing
+
+SageMaker Processing is responsible primarily for ML-specific preparation:
+
+* Missing-value strategies
+* Categorical encoding
+* Numerical transformations
+* Feature preparation
+* Train/validation/test dataset preparation
+* ML-specific validation
+* Training/inference preprocessing consistency
+* Export of training-ready datasets
+
+Model training itself is outside the Processing Layer.
+
+---
+
+## 4. AWS Glue Processing
+
+AWS Glue represents the data engineering portion of the Processing Layer.
+
+Its role is to transform source-oriented data into standardized and curated datasets.
+
+The conceptual flow is:
+
+```text
+RAW
+ │
+ ▼
+AWS Glue
+ │
+ ├── Standardization
+ ├── Domain Processing
+ └── Cross-Domain Integration
+ │
+ ▼
+STANDARDIZED
+ │
+ ▼
+CURATED
+```
+
+Typical transformations include:
+
+* Schema normalization
+* Data-type normalization
+* Column standardization
+* Structural cleaning
+* Domain decomposition
+* Domain-level transformations
+* Cross-domain joins
+* Dataset integration
+
+These transformations should remain independent of any specific ML model.
+
+---
+
+## 5. SageMaker Processing
+
+SageMaker Processing represents the ML-specific portion of the Processing Layer.
+
+It consumes validated curated data and prepares datasets for model training.
+
+The conceptual flow is:
+
+```text
+CURATED DATASET
+       │
+       ▼
+Dataset Validation
+       │
+       ▼
+SageMaker Processing
+       │
+       ├── Missing-Value Strategy
+       ├── Encoding
+       ├── Numerical Transformations
+       ├── Feature Preparation
+       └── Dataset Splitting
+       │
+       ▼
+TRAINING-READY DATASET
+```
+
+SageMaker Processing should therefore not be treated as the general-purpose data engineering layer.
+
+Its responsibility begins when the data has reached the ML-specific processing boundary.
+
+---
+
+## 6. Processing Workflow
+
+The target Phase 2 processing workflow is:
+
+```text
+Source Data
+    │
+    ▼
+Raw Data
+    │
+    ▼
+Source / Ingestion Validation
+    │
+    ▼
+AWS Glue
+    │
+    ▼
+Standardized Domain Data
+    │
+    ▼
+Cross-Domain Integration
+    │
+    ▼
+Curated Dataset
+    │
+    ▼
+Curated Dataset Validation
+    │
+    ▼
+SageMaker Processing
+    │
+    ▼
+Training-Ready Dataset
+    │
+    ▼
+SageMaker Training
+```
+
+Each stage produces a controlled output rather than modifying an existing production dataset in place.
+
+---
+
+## 7. Input Data
+
+The Processing Layer consumes datasets stored in Amazon S3.
+
+Depending on the processing stage, inputs may include:
+
+* Raw source datasets
+* Standardized domain datasets
+* Curated datasets
+* Dataset metadata
+* Validation results
+* Processing configuration
+* Dataset version information
+
+For example:
+
+```text
+AWS Glue
+
+Input:
+    Raw Dataset
+
+Output:
+    Standardized Dataset
+```
+
+and:
+
+```text
+SageMaker Processing
+
+Input:
+    Curated Dataset
+
+Output:
+    Training-Ready Dataset
+```
+
+---
+
+## 8. Output Data
+
+Processing outputs are stored as new dataset artifacts.
+
+Examples include:
+
+* Standardized datasets
+* Curated datasets
+* Training-ready datasets
+* Validation reports
+* Processing metadata
+* Lineage metadata
+
+Controlled datasets should not be overwritten.
+
+Instead:
+
+```text
+Input Dataset Version
         │
         ▼
-Store Results in Amazon S3
+Processing
+        │
+        ▼
+New Dataset Version
 ```
 
-Every execution produces reproducible outputs that can be reused across future training workflows.
+This supports reproducibility and historical traceability.
 
 ---
 
-# 8. Reproducibility Strategy
+## 9. Validation Boundaries
 
-Reproducibility is a primary design objective of the Processing Layer.
+Validation occurs at multiple points in the processing lifecycle.
 
-Every execution should preserve:
+### 9.1 Source / Ingestion Validation
 
-- Processing configuration.
-- Dataset version.
-- Input metadata.
-- Output metadata.
-- Processing logs.
-- Processing timestamp.
-- Data lineage.
-- Processing code version.
+The first validation layer checks whether incoming data is structurally usable.
 
-This information enables any processed dataset to be recreated in the future using the same inputs and processing configuration.
+Examples include:
+
+* Schema validation
+* Required columns
+* Data types
+* Malformed records
+* Duplicate identifiers
+* Basic data-quality rules
+
+```text
+Raw Dataset
+      │
+      ▼
+Source / Ingestion Validation
+```
+
+This validation does not perform ML-specific preprocessing.
 
 ---
 
-# 9. Local-First Development
+### 9.2 Curated Dataset Validation
 
-Processing workflows are developed locally before being executed in AWS.
+After domain processing and integration, the resulting curated dataset is validated before entering ML preprocessing.
 
-The recommended workflow is:
+Examples include:
 
+* Cross-domain consistency
+* Business rules
+* Required relationships
+* Data completeness
+* Target-variable validity
+* Curated dataset quality
+
+```text
+Curated Dataset
+      │
+      ▼
+Curated Dataset Validation
 ```
+
+The validation result acts as a quality gate:
+
+```text
+Validation
+    │
+ ┌──┴──┐
+ ▼     ▼
+PASS  FAIL
+ │     │
+ ▼     ▼
+Continue   Reject /
+           Quarantine /
+           Investigate
+```
+
+Validation does not imply automatic correction.
+
+---
+
+## 10. ML Preprocessing Boundary
+
+ML-specific preprocessing begins after the curated dataset has passed the appropriate validation gates.
+
+Typical operations include:
+
+* Missing-value treatment
+* Categorical encoding
+* Numerical transformations
+* Scaling
+* Feature preparation
+* Train/validation/test splitting
+* ML-specific transformations
+
+The boundary is therefore:
+
+```text
+CURATED DATASET
+       │
+       ▼
+CURATED VALIDATION
+       │
+       ▼
+ML PREPROCESSING
+       │
+       ▼
+TRAINING-READY DATA
+```
+
+This separation is important because data engineering and ML preprocessing have different responsibilities.
+
+---
+
+## 11. Reproducibility
+
+Processing must be reproducible.
+
+A processing result should be determined by controlled inputs and configuration.
+
+Conceptually:
+
+```text
+Input Dataset Version
+        +
+Processing Code Version
+        +
+Processing Configuration
+        │
+        ▼
+Processed Dataset Version
+```
+
+Processing metadata should capture information such as:
+
+* Input dataset version
+* Output dataset version
+* Processing code version
+* Configuration version
+* Execution timestamp
+* Processing environment
+* Validation results
+
+This allows previous processing results to be reconstructed.
+
+---
+
+## 12. Dataset Lineage
+
+The Processing Layer contributes to end-to-end dataset lineage.
+
+A simplified lineage example is:
+
+```text
+Source Data
+    │
+    ▼
+Raw Dataset
+    │
+    ▼
+AWS Glue
+    │
+    ▼
+Standardized Domain Data
+    │
+    ▼
+Curated Dataset
+    │
+    ▼
+SageMaker Processing
+    │
+    ▼
+Training-Ready Dataset
+    │
+    ▼
+SageMaker Training
+    │
+    ▼
+Model
+```
+
+Lineage should make it possible to determine:
+
+* Where the data originated
+* Which transformations were applied
+* Which dataset version was produced
+* Which processing code was used
+* Which model ultimately consumed the data
+
+---
+
+## 13. Local-First Development
+
+Processing logic should be developed and validated locally before being executed in AWS.
+
+The preferred workflow is:
+
+```text
 Develop Processing Logic
-        │
-        ▼
+          │
+          ▼
 Validate Locally
-        │
-        ▼
-Execute SageMaker Processing Job
-        │
-        ▼
-Validate Outputs
-        │
-        ▼
-Store Artifacts in Amazon S3
+          │
+          ▼
+Run Tests
+          │
+          ▼
+Provision AWS
+          │
+          ▼
+Execute AWS Processing
+          │
+          ▼
+Validate AWS Output
 ```
 
-This strategy minimizes cloud costs while maintaining enterprise-level reproducibility.
+This approach reduces:
+
+* AWS costs
+* Debugging time
+* Iteration time
+* Dependence on cloud infrastructure during development
+
+It also allows the same processing logic to be validated before cloud execution.
 
 ---
 
-# 10. Design Principles
+## 14. Ephemeral AWS Execution
 
-The Processing Layer follows the engineering principles established for this roadmap.
+AWS infrastructure is considered ephemeral by default within this roadmap.
 
-Particular emphasis is placed on:
+The local project remains the primary reconstruction source.
 
-- Separation of concerns.
-- Modular architecture.
-- SOLID principles.
-- Configuration over hardcoded values.
-- Reproducibility.
-- Data lineage.
-- Dataset versioning.
-- Enterprise governance.
+The operating model is:
 
----
+```text
+Local Project
+      │
+      ▼
+Terraform
+      │
+      ▼
+Create AWS Resources
+      │
+      ▼
+Execute / Verify
+      │
+      ▼
+Console Inspection
+      │
+      ▼
+Document Evidence
+      │
+      ▼
+Destroy AWS Resources
+      │
+      ▼
+Recreate Later
+```
 
-# 11. Future Integration
+Destroying the AWS environment does not destroy the architecture.
 
-The Processing Layer serves as the foundation for subsequent platform components.
+The local project retains:
 
-Future integrations include:
+* Terraform configuration
+* Processing code
+* Tests
+* Configuration
+* SQL
+* Documentation
+* Infrastructure definitions
 
-- SageMaker Training Jobs.
-- Hyperparameter Tuning Jobs.
-- SageMaker Experiments.
-- Model Evaluation.
-- Model Registry.
-- SageMaker Pipelines.
-- Model Deployment.
-- Monitoring.
-- Retraining workflows.
-
-This architecture ensures that every training workflow begins with standardized, validated, and reproducible datasets.
-
----
-
-# 12. Expected Outcome
-
-Upon completion of this architecture, the platform will provide:
-
-- Reproducible data processing workflows.
-- Standardized training datasets.
-- Automated dataset validation.
-- Enterprise-ready feature preparation.
-- Complete data lineage.
-- Version-controlled processed datasets.
-- A scalable foundation for model training.
+These components allow the AWS environment to be reconstructed when required.
 
 ---
 
-# 13. Architectural Decisions
+## 15. Dataset Versioning
 
-The Processing Layer is built upon a set of architectural decisions that ensure scalability, reproducibility, and maintainability.
+Processing outputs should be treated as immutable dataset artifacts.
 
-## AD-01 — Processing Is Independent from Training
+For example:
 
-Data preparation and model training are independent responsibilities.
+```text
+Curated Dataset v1
+        │
+        ▼
+Processing Pipeline v1
+        │
+        ▼
+Training-Ready Dataset v1
+```
 
-Separating these concerns improves modularity, allows preprocessing workflows to evolve independently, and enables the same processed dataset to be reused across multiple training experiments.
+If processing logic changes:
 
----
+```text
+Curated Dataset v1
+        │
+        ▼
+Processing Pipeline v2
+        │
+        ▼
+Training-Ready Dataset v2
+```
 
-## AD-02 — Processing Produces Immutable Artifacts
+The previous dataset remains unchanged.
 
-Processing Jobs never modify source datasets.
-
-Instead, each execution produces a new processed dataset together with its corresponding metadata, preserving complete reproducibility and auditability.
-
----
-
-## AD-03 — All Outputs Are Versioned
-
-Every processed dataset receives a version identifier and associated metadata.
-
-Versioning enables reproducible experiments, simplifies debugging, and supports enterprise governance requirements.
-
----
-
-## AD-04 — Processing Logic Is Cloud-Agnostic
-
-Business logic remains independent of AWS-specific implementations.
-
-Cloud integrations are isolated within dedicated AWS modules, allowing processing algorithms to be developed, tested, and validated locally before execution in managed cloud environments.
+This allows engineers to determine which processing logic produced a particular training dataset.
 
 ---
 
-## AD-05 — Local Validation Before Cloud Execution
+## 16. Separation from Training
 
-Every processing workflow is validated locally before being executed as a SageMaker Processing Job.
+The Processing Layer prepares data but does not train models.
 
-This Local-First strategy reduces development time, minimizes AWS costs, and ensures that cloud resources are used only to validate enterprise integrations.
+The architectural boundary is:
+
+```text
+Processing Layer
+      │
+      ▼
+Training-Ready Dataset
+      │
+      │
+      ▼
+Training Layer
+      │
+      ▼
+SageMaker Training Job
+      │
+      ▼
+Model Artifact
+```
+
+This separation allows processing and training to evolve independently.
+
+For example:
+
+* Processing code can change without changing the training algorithm.
+* Training configuration can change without modifying the source data.
+* Different models can consume the same validated training-ready dataset.
 
 ---
+
+## 17. Design Principles
+
+The Processing Layer follows these principles:
+
+### Separation of Responsibilities
+
+Data engineering and ML preprocessing are separate concerns.
+
+```text
+AWS Glue
+    │
+    ▼
+Data Engineering
+```
+
+```text
+SageMaker Processing
+    │
+    ▼
+ML Preprocessing
+```
+
+### Reproducibility
+
+Processing must be reproducible from controlled inputs, code, and configuration.
+
+### Immutability
+
+Existing controlled dataset versions should not be overwritten.
+
+### Traceability
+
+Every processed dataset should have identifiable inputs and processing history.
+
+### Local-First Development
+
+Processing logic should be validated locally before cloud execution.
+
+### Ephemeral Infrastructure
+
+AWS compute and supporting infrastructure should be created only when required and destroyed after validation when persistence is unnecessary.
+
+### Separation from Training
+
+Data preparation should remain independent from model training.
+
+---
+
+## 18. Architectural Summary
+
+The Phase 2 Processing Layer can be summarized as:
+
+```text
+                         S3 DATA LAKE
+                              │
+                              ▼
+                             RAW
+                              │
+                              ▼
+                         AWS GLUE
+                              │
+                  ┌───────────┴───────────┐
+                  │                       │
+           Standardization          Domain Processing
+                  │                       │
+                  └───────────┬───────────┘
+                              ▼
+                         STANDARDIZED
+                              │
+                              ▼
+                    Cross-Domain Integration
+                              │
+                              ▼
+                           CURATED
+                              │
+                              ▼
+                    Curated Validation
+                              │
+                              ▼
+                    SAGEMAKER PROCESSING
+                              │
+                  ┌───────────┴───────────┐
+                  │                       │
+             ML Preprocessing      Feature Preparation
+                  │                       │
+                  └───────────┬───────────┘
+                              ▼
+                     TRAINING-READY
+                              │
+                              ▼
+                    SAGEMAKER TRAINING
+```
+
+The key architectural boundary is:
+
+> **AWS Glue prepares and integrates data as part of the data engineering layer. SageMaker Processing prepares validated curated data for machine learning.**
+
+This separation keeps the Phase 2 data foundation modular, reproducible, and independent from model training.
+
+---
+
+## 19. Interview Preparation
+
+### Why would you use AWS Glue instead of SageMaker Processing?
+
+AWS Glue is primarily a data engineering service designed for data integration, transformation, cataloging, and large-scale data preparation.
+
+SageMaker Processing is designed for machine-learning-specific processing and preparation of datasets for ML workflows.
+
+The choice therefore depends on the responsibility of the transformation.
+
+---
+
+### Where does ML preprocessing happen?
+
+ML-specific preprocessing happens after the curated dataset has passed the required validation gates.
+
+In this architecture, SageMaker Processing is responsible for producing the training-ready dataset.
+
+---
+
+### Why separate Glue from SageMaker Processing?
+
+The separation prevents general data engineering logic from becoming tightly coupled to ML workflows.
+
+It also allows:
+
+* Independent evolution
+* Reusability
+* Clear ownership
+* Better testing
+* Better lineage
+* Easier operational reasoning
+
+---
+
+### Why should processing outputs be immutable?
+
+Immutable outputs allow previous datasets to remain reproducible.
+
+If processing logic changes, a new dataset version is created rather than modifying the previous artifact.
+
+---
+
+### How would you reproduce a previous processing result?
+
+I would recover:
+
+* Input dataset version
+* Processing code version
+* Processing configuration
+* Processing environment
+* Validation results
+
+Then execute the same processing logic against the same input version.
+
+---
+
+## 20. Key Takeaways
+
+* AWS Glue is responsible primarily for data engineering transformations.
+* SageMaker Processing is responsible primarily for ML-specific preprocessing.
+* Raw, Standardized, and Curated represent logical data states in the S3 Data Lake.
+* Training-Ready data is produced downstream of the curated dataset.
+* Validation acts as a quality gate between processing stages.
+* Processing outputs should be treated as immutable artifacts.
+* Processing must maintain dataset lineage.
+* Processing logic should be validated locally before AWS execution.
+* AWS infrastructure is ephemeral by default in this roadmap.
+* The local project is the primary reconstruction source.
+* Processing remains separate from model training.
+* Dataset versioning, lineage, and reproducibility are core Processing Layer concerns.

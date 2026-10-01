@@ -1,319 +1,266 @@
-# Orchestration Layer Architecture
+# Orchestration Layer
 
-## 1. Overview
+## 1. Purpose
 
-The Orchestration Layer coordinates every stage of the machine learning lifecycle into a single, automated, reproducible workflow.
+The Orchestration Layer coordinates the execution of the ML lifecycle.
 
-Rather than executing each component independently, orchestration ensures that data ingestion, processing, training, evaluation, governance, and model registration occur in the correct order while preserving reproducibility and enterprise governance.
+Its responsibility is to control:
 
-Within AWS, orchestration is implemented using Amazon SageMaker Pipelines.
+* Execution order
+* Dependencies between stages
+* Pipeline triggers
+* Scheduling
+* Failure handling
+* Reproducibility
 
-The Orchestration Layer represents the backbone of the enterprise MLOps platform.
-
----
-
-# 2. Architectural Goals
-
-The Orchestration Layer has the following objectives:
-
-- Automate the end-to-end machine learning workflow.
-- Coordinate every platform component.
-- Eliminate manual execution.
-- Improve reproducibility.
-- Standardize model production.
-- Support enterprise governance.
-- Enable continuous integration of ML workflows.
-- Prepare the platform for continuous delivery and retraining.
+The orchestration layer coordinates existing platform components. It does not replace their responsibilities.
 
 ---
 
-# 3. Position Inside the Enterprise ML Platform
+## 2. Position in the Architecture
 
-The Orchestration Layer coordinates every architectural component developed throughout Phase 2.
+The Orchestration Layer sits above the main ML platform components.
 
-```
-AWS Data Platform
-        │
-        ▼
-Processing Layer
-        │
-        ▼
-Training Platform
-        │
-        ▼
-Model Governance
-        │
-        ▼
-Deployment Platform (Phase 3)
+```text
+                    ORCHESTRATION LAYER
+                           │
+          ┌────────────────┼────────────────┐
+          │                │                │
+          ▼                ▼                ▼
+      Processing        Training        Governance
+          │                │                │
+          └────────────────┼────────────────┘
+                           │
+                           ▼
+                      Deployment
+                           │
+                           ▼
+                      Monitoring
 ```
 
-Rather than replacing existing components, orchestration coordinates them into a single enterprise workflow.
+---
+
+## 3. What Is Orchestrated
+
+The orchestration workflow coordinates the major stages of the ML lifecycle:
+
+1. Data ingestion
+2. Data validation
+3. Data processing
+4. Curated dataset validation
+5. ML preprocessing
+6. Model training
+7. Model evaluation
+8. Model registration
+9. Model deployment
+10. Monitoring
+
+The orchestrator ensures that downstream stages execute only when their required upstream stages have completed successfully.
 
 ---
 
-# 4. SageMaker Pipelines
+## 4. Pipeline Dependencies
 
-Amazon SageMaker Pipelines provides workflow orchestration for the complete machine learning lifecycle.
+A simplified dependency chain is:
 
-Responsibilities include:
-
-- Workflow automation.
-- Dependency management.
-- Pipeline execution.
-- Pipeline reproducibility.
-- Pipeline versioning.
-- Enterprise governance.
-- End-to-end automation.
-
-Every pipeline execution represents a complete and reproducible machine learning workflow.
-
----
-
-# 5. Pipeline Components
-
-The orchestration layer coordinates the following pipeline stages.
-
-### Data Preparation
-
-- Load datasets.
-- Validate datasets.
-- Execute Processing Jobs.
-
----
-
-### Model Training
-
-- Execute SageMaker Training Jobs.
-- Train candidate models.
-- Execute Hyperparameter Tuning Jobs.
-
----
-
-### Model Evaluation
-
-- Compute evaluation metrics.
-- Compare candidate models.
-- Generate evaluation reports.
-
----
-
-### Validation Gates
-
-- Execute Condition Steps.
-- Compare metrics against predefined thresholds.
-- Determine model eligibility.
-
----
-
-### Model Registration
-
-- Register approved models.
-- Store model metadata.
-- Preserve model lineage.
-
----
-
-# 6. End-to-End Workflow
-
-The complete enterprise workflow is illustrated below.
-
-```
-Amazon S3
-        │
-        ▼
-Glue Data Catalog
-        │
-        ▼
-Amazon Athena
-        │
-        ▼
-SageMaker Processing
-        │
-        ▼
-Training Jobs
-        │
-        ▼
-Hyperparameter Tuning
-        │
-        ▼
+```text
+Data Ingestion
+      │
+      ▼
+Source Validation
+      │
+      ▼
+Data Processing
+      │
+      ▼
+Curated Dataset Validation
+      │
+      ▼
+ML Preprocessing
+      │
+      ▼
+Model Training
+      │
+      ▼
 Model Evaluation
-        │
-        ▼
-Condition Step
-        │
-   ┌────┴────┐
-   │         │
-   ▼         ▼
-Register   Stop
-Model     Pipeline
-        │
-        ▼
-Model Registry
-        │
-        ▼
-Deployment Platform
+      │
+      ▼
+Model Registration
+      │
+      ▼
+Model Deployment
+      │
+      ▼
+Monitoring
 ```
 
-This workflow becomes the standard execution path for every production model.
+A failed validation or processing stage should prevent dependent stages from executing.
 
 ---
 
-# 7. Pipeline Reproducibility
+## 5. AWS Integration
 
-Every pipeline execution records:
+The orchestration layer can coordinate AWS services such as:
 
-- Dataset version.
-- Processing version.
-- Training configuration.
-- Hyperparameters.
-- Experiment metadata.
-- Evaluation metrics.
-- Validation results.
-- Registered model version.
-- Pipeline execution identifier.
-- Execution timestamp.
+* AWS Glue
+* Amazon Athena
+* SageMaker Processing
+* SageMaker Training
+* SageMaker Model Registry
+* Deployment services
+* Monitoring services
 
-This information guarantees complete reproducibility of the entire machine learning workflow.
+The orchestrator is responsible for coordinating these services rather than duplicating their functionality.
 
 ---
 
-# 8. Failure Handling
+## 6. Reproducibility
 
-The orchestration layer manages failures at every stage.
+Pipeline executions should be reproducible through controlled:
+
+* Dataset versions
+* Processing code versions
+* Training code versions
+* Configuration
+* Model versions
+* Pipeline definitions
+
+Conceptually:
+
+```text
+Dataset Version
+       +
+Processing Version
+       +
+Training Version
+       +
+Configuration
+       │
+       ▼
+Reproducible Pipeline Execution
+```
+
+---
+
+## 7. Failure Handling
+
+Pipeline failures should be explicit and traceable.
 
 Examples include:
 
-- Dataset validation failure.
-- Processing Job failure.
-- Training Job failure.
-- Hyperparameter optimization failure.
-- Evaluation failure.
-- Validation Gate failure.
-- Model registration failure.
+* Validation failure
+* Processing failure
+* Training failure
+* Model evaluation failure
+* Deployment failure
 
-Each failure terminates the pipeline safely while preserving execution logs and metadata for later analysis.
+A downstream stage should not execute when a required upstream stage has failed.
 
----
-
-# 9. Local-First Development
-
-Pipeline components are developed and validated locally before being integrated into SageMaker Pipelines.
-
-Typical workflow:
-
-```
-Develop Component
-        │
-        ▼
-Validate Locally
-        │
-        ▼
-Validate Individual AWS Service
-        │
-        ▼
-Integrate into SageMaker Pipeline
-        │
-        ▼
-Execute Complete Pipeline
+```text
+Stage
+ │
+ ▼
+Success ───────► Continue
+ │
+ ▼
+Failure
+ │
+ ├── Stop dependent stages
+ ├── Record failure
+ └── Investigate / retry
 ```
 
-This strategy minimizes cloud costs while ensuring enterprise-quality integrations.
+Retries should be controlled and should not create inconsistent or duplicated dataset or model artifacts.
 
 ---
 
-# 10. Design Principles
+## 8. Local-First and Ephemeral AWS Execution
 
-The Orchestration Layer follows the engineering principles established throughout the roadmap.
+The orchestration workflow should support local development and controlled AWS execution.
 
-Particular emphasis is placed on:
+```text
+Local Development
+       │
+       ▼
+Local Validation
+       │
+       ▼
+Terraform
+       │
+       ▼
+Create AWS Resources
+       │
+       ▼
+Execute Pipeline
+       │
+       ▼
+Verify Results
+       │
+       ▼
+Document Evidence
+       │
+       ▼
+Destroy AWS Resources
+```
 
-- Workflow automation.
-- Separation of concerns.
-- Modular architecture.
-- Reproducibility.
-- Infrastructure as Code.
-- Enterprise governance.
-- Version-controlled executions.
-- Failure isolation.
-- Scalability.
-
----
-
-# 11. Future Integration
-
-The Orchestration Layer prepares the platform for future enterprise capabilities, including:
-
-- CI/CD pipelines.
-- Automated deployment.
-- Batch inference.
-- Real-time inference.
-- Model monitoring.
-- Data drift detection.
-- Model drift detection.
-- Automated retraining.
-- Scheduled retraining.
-- Event-driven retraining.
-
-The orchestration architecture remains stable while additional production capabilities are incorporated.
+The local project remains the primary reconstruction source for the orchestration environment.
 
 ---
 
-# 12. Expected Outcome
+## 9. Design Principles
 
-Upon completion of this architecture, the platform will provide:
+The Orchestration Layer follows these principles:
 
-- Fully automated ML workflows.
-- End-to-end reproducibility.
-- Enterprise orchestration.
-- Automated validation.
-- Automated model governance.
-- Production-ready model registration.
-- A scalable foundation for enterprise deployment.
+### Explicit Dependencies
 
----
+Each pipeline stage must have clearly defined inputs and outputs.
 
-# 13. Architectural Decisions
+### Failure Isolation
 
-## AD-01 — Every Workflow Is Pipeline-Driven
+A failed stage should prevent invalid downstream execution.
 
-No production workflow should rely on manually executed steps.
+### Reproducibility
 
-All enterprise workflows must be orchestrated through SageMaker Pipelines.
+Pipeline execution should be traceable to specific dataset, code, configuration, and model versions.
 
----
+### Idempotency
 
-## AD-02 — Pipeline Stages Are Independent
+Repeated execution should not create unintended duplicate artifacts or inconsistent state.
 
-Each pipeline stage performs a single responsibility and communicates only through well-defined artifacts.
+### Separation of Responsibilities
 
-This improves modularity, maintainability, and scalability.
+The orchestrator coordinates services but does not duplicate their internal processing logic.
+
+### Controlled Execution
+
+AWS infrastructure may be created for execution and validation and destroyed afterward when persistence is not required.
 
 ---
 
-## AD-03 — Validation Gates Control Progression
+## 10. Architectural Summary
 
-Every candidate model must satisfy predefined validation criteria before progressing to model registration.
+The Orchestration Layer connects the platform components into a controlled ML lifecycle:
 
-This prevents unqualified models from entering production.
+```text
+                 ORCHESTRATION
+                      │
+                      ▼
+              Data / Validation
+                      │
+                      ▼
+                  Processing
+                      │
+                      ▼
+                   Training
+                      │
+                      ▼
+              Model Governance
+                      │
+                      ▼
+                 Deployment
+                      │
+                      ▼
+                 Monitoring
+```
 
----
-
-## AD-04 — Pipelines Are Fully Reproducible
-
-Every pipeline execution records sufficient metadata to reproduce the complete workflow from dataset ingestion to model registration.
-
----
-
-## AD-05 — Orchestration Coordinates, It Does Not Replace
-
-The orchestration layer does not contain business logic.
-
-Its responsibility is to coordinate the execution of specialized platform components while preserving clear architectural boundaries.
-
----
-
-## AD-06 — Incremental Platform Evolution
-
-The orchestration architecture is designed to support future deployment, monitoring, CI/CD, and automated retraining without requiring structural changes to the platform.
-
----
+Its primary role is to provide **execution control, dependency management, failure handling, and reproducibility across the ML lifecycle**.

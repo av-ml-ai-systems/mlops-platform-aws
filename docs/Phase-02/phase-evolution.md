@@ -954,3 +954,690 @@ Training-Ready Dataset
 ```
 
 This establishes validation as a **first-class production component of the ML data foundation**, while preserving a clear separation between detecting data problems, remediating them, and transforming accepted data for machine learning.
+
+## Ephemeral AWS Infrastructure and Reproducible Cloud Validation
+
+### Evolution
+
+The initial Phase 2 plan assumed that the AWS data foundation could remain provisioned while the implementation progressed. During the transition from local-first development to the AWS data platform, the approach was refined to use **ephemeral AWS infrastructure as the default operating model**.
+
+The objective is not to maintain a permanently running AWS environment. The objective is to gain hands-on experience with the AWS data platform, validate the architecture against real AWS services, inspect the resulting resources in the AWS Console, collect implementation evidence, and then remove the infrastructure when the validation session is complete.
+
+The infrastructure remains reproducible because the **local project repository contains the Terraform configuration, application code, SQL, tests, documentation, and other implementation assets required to recreate the environment**.
+
+Git and GitHub provide version control, history, and remote backup of the project, but AWS reconstruction does not fundamentally depend on GitHub. The local project itself is the operational reconstruction source.
+
+This results in the following operating model:
+
+```text
+                    LOCAL PROJECT
+                         │
+              ┌──────────┴──────────┐
+              │                     │
+        Terraform code         Application /
+        configuration          processing code
+              │                     │
+              └──────────┬──────────┘
+                         │
+                         ▼
+                Provision AWS Resources
+                         │
+                         ▼
+              Upload / Process / Validate
+                         │
+                         ▼
+               Console Inspection
+                  + Evidence
+                         │
+                         ▼
+                  Document Results
+                         │
+                         ▼
+                 Destroy Resources
+                         │
+                         ▼
+                 AWS removed
+                         │
+                         ▼
+              Recreate later from
+                local project
+```
+
+### Why the approach changed
+
+The project is being developed as an MLOps learning and portfolio platform rather than as a permanently hosted production service.
+
+Keeping cloud resources alive between implementation sessions provides limited additional learning value while introducing unnecessary cost and resource-management overhead.
+
+The revised approach therefore prioritizes:
+
+* reproducibility over persistence
+* infrastructure-as-code over manually maintained resources
+* controlled cloud usage over continuously running infrastructure
+* real AWS validation over theoretical architecture
+* documented evidence over permanent environments
+* explicit resource destruction after validation
+* rapid recreation when the next implementation session begins
+
+This is also consistent with an important MLOps principle:
+
+> **The environment should be reproducible from the project source rather than depend on manually preserved infrastructure.**
+
+### Local project as the reconstruction source
+
+The **local project repository is the primary operational source of truth for infrastructure reconstruction**.
+
+Terraform configuration will live inside the project alongside the data-engineering and ML platform code that it supports.
+
+Conceptually, the project will contain:
+
+```text
+mlops-platform-aws/
+│
+├── src/
+│   └── mlops_engineering_roadmap/
+│
+├── tests/
+│
+├── notebooks/
+│
+├── sql/
+│
+├── infrastructure/
+│   └── terraform/
+│       └── aws/
+│
+├── scripts/
+│
+├── docs/
+│   └── Phase-02/
+│
+└── README.md
+```
+
+The exact directory structure will evolve as Phase 2 is implemented. The important principle is that Terraform belongs **inside the project**, rather than being maintained as a separate external infrastructure project.
+
+The project should contain the implementation required to recreate the AWS environment, including where applicable:
+
+* Terraform configuration
+* Terraform variables and configuration
+* processing logic
+* validation logic
+* Athena SQL
+* tests
+* scripts
+* documentation
+* architecture definitions
+* implementation notes
+
+The resulting relationship is:
+
+```text
+                    LOCAL PROJECT
+                 ┌──────────────────┐
+                 │ Terraform        │
+                 │ Python/PySpark   │
+                 │ SQL              │
+                 │ Tests            │
+                 │ Configuration    │
+                 │ Documentation    │
+                 └────────┬─────────┘
+                          │
+                          │ terraform apply
+                          ▼
+                    AWS ENVIRONMENT
+                          │
+                          │ validation
+                          ▼
+                    AWS RESOURCES
+                          │
+                          │ terraform destroy
+                          ▼
+                    AWS REMOVED
+                          │
+                          │
+                          └───────────────┐
+                                          │
+                       terraform apply    │
+                                          ▼
+                                   AWS RECREATED
+```
+
+### Role of Git and GitHub
+
+Git remains an important part of the engineering workflow, but it should not be confused with the reconstruction mechanism itself.
+
+The relationship is:
+
+```text
+                 LOCAL PROJECT
+                       │
+              ┌────────┴────────┐
+              ▼                 ▼
+       Local development       Git
+       and execution       version history
+              │                 │
+              │                 ▼
+              │              GitHub
+              │        remote repository /
+              │        backup / portfolio
+              │
+              └───────────────┐
+                              ▼
+                     AWS reconstruction
+```
+
+Therefore:
+
+* **Local project** → operational source for development and reconstruction.
+* **Terraform** → infrastructure definition and recreation mechanism.
+* **Git** → version control and historical record.
+* **GitHub** → remote repository, backup, and portfolio visibility.
+* **AWS** → temporary execution and validation environment.
+
+The AWS environment should never become the only place where the architecture exists.
+
+### Standard AWS session lifecycle
+
+Each AWS implementation session will follow a controlled lifecycle:
+
+```text
+1. CREATE
+      │
+      ▼
+2. VERIFY
+      │
+      ▼
+3. INSPECT
+      │
+      ▼
+4. DOCUMENT
+      │
+      ▼
+5. SCREENSHOT / EVIDENCE
+      │
+      ▼
+6. DESTROY
+      │
+      ▼
+7. RECREATE LATER FROM THE LOCAL PROJECT
+```
+
+#### 1. Create
+
+Terraform provisions only the AWS resources required for the current implementation milestone.
+
+Examples may include:
+
+* S3 bucket
+* S3 configuration
+* Glue database
+* Glue crawler
+* Glue job
+* Athena workgroup
+* SageMaker Processing resources
+
+Not all resources will be created simultaneously. The infrastructure will grow incrementally as Phase 2 progresses.
+
+#### 2. Verify
+
+After provisioning, the implementation will be verified programmatically and, where useful, through the AWS Console.
+
+Verification should establish that:
+
+* the expected resources exist
+* Terraform reports the expected state
+* configuration is correct
+* permissions are sufficient
+* resources can perform the intended operation
+* expected data can be uploaded, processed, queried, or validated
+
+Cloud validation is therefore not based solely on successful Terraform execution.
+
+```text
+Terraform Apply
+      │
+      ▼
+Infrastructure Exists
+      │
+      ▼
+Functional Validation
+      │
+      ▼
+Expected AWS Behavior
+```
+
+#### 3. Inspect
+
+The AWS Console will be used as a complementary learning and verification tool.
+
+The Console is useful for understanding how the infrastructure appears from an AWS operational perspective and for visually confirming configuration.
+
+The Console is **not** the authoritative mechanism for creating or maintaining infrastructure.
+
+Terraform remains the infrastructure definition.
+
+```text
+Terraform
+   │
+   ├──► Defines infrastructure
+   │
+   └──► Recreates infrastructure
+
+AWS Console
+   │
+   ├──► Inspect
+   ├──► Understand
+   └──► Capture evidence
+```
+
+#### 4. Document
+
+The important results of the implementation session will be recorded in the Phase 2 documentation.
+
+Documentation should capture:
+
+* what was provisioned
+* why the resource was required
+* how it fits into the architecture
+* what was validated
+* important implementation decisions
+* relevant limitations or findings
+* evidence that the AWS implementation worked
+
+The Phase 2 evolution document records architectural evolution and rationale, while implementation-specific documentation can contain operational details.
+
+#### 5. Screenshot / evidence
+
+When useful, screenshots will be captured from the AWS Console to provide visual evidence of the implemented architecture.
+
+Examples include:
+
+* S3 bucket configuration
+* S3 object structure
+* Glue database/table configuration
+* Glue crawler results
+* Athena query execution
+* SageMaker Processing configuration or execution
+* relevant AWS resource status
+
+The screenshots are evidence of the cloud validation performed during the session. They do not replace Terraform or source code.
+
+The implementation itself remains reproducible from the local project.
+
+```text
+LOCAL PROJECT
+      │
+      │ authoritative implementation
+      ▼
+AWS Resources
+      │
+      │ temporary validation
+      ▼
+Screenshots / Evidence
+      │
+      ▼
+Documentation
+```
+
+#### 6. Destroy
+
+After validation and evidence collection are complete, the temporary AWS resources will normally be destroyed.
+
+The default policy is:
+
+```text
+AWS resource created for validation
+             │
+             ▼
+        Validate it
+             │
+             ▼
+       Capture evidence
+             │
+             ▼
+       Destroy resource
+```
+
+Resources expected to be destroyed after validation include, where applicable:
+
+* S3 bucket and temporary data
+* Glue crawlers
+* Glue jobs
+* Glue databases or workgroups when no longer required
+* Athena workgroups when unnecessary
+* SageMaker Processing resources
+* EC2 or other compute resources
+* other temporary AWS infrastructure created specifically for the session
+
+The exact destruction sequence will depend on resource dependencies.
+
+### S3-specific consideration
+
+S3 requires additional care because bucket destruction is not equivalent to simply deleting the bucket declaration.
+
+If S3 versioning is enabled, previous object versions may remain even after the current object is deleted.
+
+Therefore, the destruction process must account for:
+
+```text
+S3 Bucket
+   │
+   ├── Current objects
+   │
+   └── Previous object versions
+             │
+             ▼
+       Complete cleanup
+             │
+             ▼
+       Bucket destruction
+```
+
+Terraform destruction must therefore be tested carefully for the chosen S3 configuration.
+
+The goal is to ensure that ephemeral infrastructure is genuinely removed rather than leaving versioned objects or other residual resources behind.
+
+### 7. Recreate later
+
+When the next Phase 2 session begins, the infrastructure can be recreated directly from the local project.
+
+The intended process is:
+
+```text
+LOCAL PROJECT
+      │
+      ├── Terraform
+      ├── Configuration
+      ├── Processing code
+      ├── Validation code
+      ├── Athena SQL
+      ├── Tests
+      └── Documentation
+             │
+             ▼
+        terraform apply
+             │
+             ▼
+       AWS infrastructure
+             │
+             ▼
+       Repeat validation
+```
+
+This means that destroying the infrastructure does **not** mean losing the implementation.
+
+The cloud environment is temporary; the engineering implementation is persistent.
+
+### What is persistent and what is ephemeral
+
+The project deliberately separates persistent engineering assets from temporary cloud resources.
+
+#### Persistent
+
+The following remain in the local project:
+
+* Terraform configuration
+* Terraform variables and configuration templates
+* Python / PySpark processing logic
+* validation logic
+* Athena SQL
+* tests
+* configuration definitions
+* architecture documentation
+* Phase evolution documentation
+* ADRs where appropriate
+* README documentation
+* implementation notes
+* screenshots and validation evidence, where appropriate and safe to retain
+
+Git provides version history for these assets, and GitHub provides a remote copy of the project.
+
+#### Ephemeral
+
+The following are normally created only for cloud validation:
+
+* S3 buckets
+* temporary S3 data
+* Glue jobs
+* Glue crawlers
+* Athena workgroups when not required persistently
+* SageMaker Processing resources
+* temporary compute
+* other temporary AWS infrastructure
+
+The fundamental distinction is:
+
+```text
+PERSISTENT
+──────────
+Local project
+Terraform
+Tests
+SQL
+Documentation
+Evidence
+Git history
+        │
+        │ recreates
+        ▼
+EPHEMERAL
+──────────
+AWS infrastructure
+AWS data
+AWS compute
+AWS managed resources
+```
+
+### Terraform's role
+
+Terraform becomes the mechanism that makes this ephemeral model practical.
+
+Without infrastructure-as-code, repeatedly destroying and recreating resources would introduce unnecessary manual work and increase the risk of configuration drift.
+
+With Terraform:
+
+```text
+Local Project
+      │
+      ▼
+Terraform Configuration
+      │
+      ▼
+terraform apply
+      │
+      ▼
+AWS resources
+      │
+      ▼
+Validate
+      │
+      ▼
+terraform destroy
+      │
+      ▼
+AWS resources removed
+      │
+      ▼
+terraform apply
+      │
+      ▼
+AWS resources recreated
+```
+
+This provides practical experience with:
+
+* Infrastructure as Code
+* reproducible environments
+* controlled provisioning
+* controlled destruction
+* infrastructure lifecycle management
+* configuration consistency
+* reduction of manual configuration
+* environment recreation
+
+The ability to recreate the environment becomes part of the MLOps engineering outcome rather than merely a cost-saving technique.
+
+### Controlled destruction
+
+Destruction must remain an **explicit operational action**.
+
+Normal processing or validation workflows must never accidentally execute a destructive operation.
+
+For example:
+
+```text
+Normal pipeline
+      │
+      ├── Provision if explicitly required
+      ├── Process
+      ├── Validate
+      └── Produce results
+
+Separate infrastructure lifecycle operation
+      │
+      └── Explicit terraform destroy
+```
+
+The project will therefore keep the distinction between:
+
+* data-processing operations
+* validation operations
+* infrastructure provisioning
+* infrastructure destruction
+
+This separation reduces the risk of accidentally deleting infrastructure or data during normal development.
+
+### Cost-control principle
+
+Cost control is an explicit architectural concern because the project is being developed under a limited personal budget.
+
+The strategy is therefore:
+
+```text
+Use AWS when AWS provides learning or architectural value
+                    │
+                    ▼
+            Keep resources small
+                    │
+                    ▼
+          Validate real behavior
+                    │
+                    ▼
+          Capture implementation evidence
+                    │
+                    ▼
+              Destroy resources
+```
+
+The project does not attempt to avoid AWS entirely.
+
+Instead, it uses AWS deliberately and temporarily where managed services provide meaningful MLOps experience.
+
+This preserves the practical value of working with:
+
+* Amazon S3
+* AWS Glue
+* Glue Data Catalog
+* Amazon Athena
+* Amazon SageMaker
+
+while minimizing unnecessary persistent resource usage.
+
+### Architectural and MLOps value
+
+The ephemeral infrastructure strategy is itself an MLOps engineering lesson.
+
+The important principle is not:
+
+> "Keep the cloud environment running."
+
+The important principle is:
+
+> **"Make the cloud environment reproducible."**
+
+A production system may require persistent infrastructure, but a learning and portfolio environment does not need to remain permanently provisioned to demonstrate that the architecture works.
+
+The Phase 2 project therefore treats AWS as a reproducible execution and validation environment rather than as a manually maintained development environment.
+
+### Resulting Phase 2 operating principle
+
+```text
+             LOCAL PROJECT
+        ┌─────────────────────┐
+        │ Code                │
+        │ Terraform           │
+        │ Configuration       │
+        │ Tests               │
+        │ SQL                 │
+        │ Documentation       │
+        │ Evidence            │
+        └──────────┬──────────┘
+                   │
+                   ▼
+          REPRODUCIBLE AWS
+            ENVIRONMENT
+                   │
+                   ▼
+             AWS VALIDATION
+                   │
+          ┌────────┴────────┐
+          ▼                 ▼
+    Console Inspection   Programmatic
+    + Screenshots         Validation
+          │                 │
+          └────────┬────────┘
+                   ▼
+              DOCUMENT
+               RESULTS
+                   │
+                   ▼
+              DESTROY AWS
+               RESOURCES
+                   │
+                   ▼
+             RECREATE LATER
+             FROM LOCAL PROJECT
+```
+
+### Current Phase 2 implication
+
+The next implementation step is to design the **S3 Data Lake foundation** before provisioning it.
+
+The intended sequence is:
+
+```text
+Phase 2
+   │
+   ▼
+S3 Data Lake Architecture
+   │
+   ▼
+Terraform Implementation
+   │
+   ▼
+Create AWS Resources
+   │
+   ▼
+Upload Domain Datasets
+   │
+   ▼
+Programmatic Verification
+   │
+   ▼
+AWS Console Inspection
+   │
+   ▼
+Screenshots / Evidence
+   │
+   ▼
+Documentation
+   │
+   ▼
+Destroy AWS Resources
+   │
+   ▼
+Recreate Later from Local Project
+```
+
+The three-layer S3 data-lake architecture will be designed next. The architectural target is **Raw → Standardized → Curated**, but only the resources required for the current milestone will be provisioned initially.
