@@ -7,3 +7,11 @@ resource "aws_s3_bucket" "mlops_data_lake" {
     ManagedBy   = "Terraform"
   }
 }
+
+resource "aws_s3_bucket_versioning" "mlops_data_lake" {
+  bucket = aws_s3_bucket.mlops_data_lake.id
+
+  versioning_configuration {
+    status = "Enabled"
+  }
+}

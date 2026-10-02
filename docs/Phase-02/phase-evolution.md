@@ -1670,3 +1670,44 @@ The deployment was validated through three complementary mechanisms:
 The bucket was intentionally created as an ephemeral learning/validation resource. The deployment confirms that the local Terraform configuration can successfully provision the AWS data lake foundation and that the resulting resource is accessible through both the AWS CLI and Console.
 
 The resource will be destroyed after the documentation milestone is captured, consistent with the project's ephemeral AWS infrastructure strategy.
+
+### S3 Bucket Versioning Validation
+
+The S3 data lake infrastructure was extended with object versioning to improve protection against accidental overwrites and support object-level data history.
+
+Terraform configured S3 Versioning for the data lake bucket:
+
+* **Bucket:** `mlops-engineering-data-lake-882507341805`
+* **Region:** `us-east-2`
+* **Terraform resource:** `aws_s3_bucket_versioning.mlops_data_lake`
+* **Versioning status:** Enabled
+
+The configuration was validated through three mechanisms:
+
+1. **Terraform validation**
+
+   * `terraform fmt`
+   * `terraform validate`
+   * `terraform plan`
+   * `terraform apply`
+
+2. **AWS CLI verification**
+
+   * `aws s3api get-bucket-versioning`
+   * `aws s3api head-bucket`
+
+   The bucket returned:
+
+   `Status: Enabled`
+
+   and confirmed the expected bucket ARN and region.
+
+3. **AWS Console verification**
+
+   * The bucket was inspected directly in the AWS Console.
+   * Bucket Versioning was confirmed as **Enabled**.
+   * Screenshots were captured as visual evidence.
+
+S3 Versioning provides version history for individual objects stored in the bucket. It is an infrastructure-level capability and is distinct from dataset-level versioning and ML lineage, which will be addressed separately in the Phase 2 dataset versioning strategy.
+
+The deployment remains ephemeral and will be destroyed after validation, consistent with the project's AWS infrastructure strategy.
