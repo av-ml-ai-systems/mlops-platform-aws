@@ -1711,3 +1711,64 @@ The configuration was validated through three mechanisms:
 S3 Versioning provides version history for individual objects stored in the bucket. It is an infrastructure-level capability and is distinct from dataset-level versioning and ML lineage, which will be addressed separately in the Phase 2 dataset versioning strategy.
 
 The deployment remains ephemeral and will be destroyed after validation, consistent with the project's AWS infrastructure strategy.
+
+### S3 Data Lake Hardening Validation
+
+The S3 data lake foundation was consolidated into a single infrastructure milestone with the following security and data-protection controls:
+
+* **S3 Bucket**
+
+  * Bucket: `mlops-engineering-data-lake-882507341805`
+  * Region: `us-east-2`
+
+* **Object Versioning**
+
+  * Enabled to preserve previous object versions.
+
+* **Server-Side Encryption**
+
+  * SSE-S3 using AES256.
+  * Encryption is automatically applied to new objects.
+  * AWS-managed S3 encryption keys are used.
+
+* **Public Access Protection**
+
+  * Block Public ACLs: Enabled
+  * Block Public Policy: Enabled
+  * Ignore Public ACLs: Enabled
+  * Restrict Public Buckets: Enabled
+
+* **Object Ownership**
+
+  * `BucketOwnerEnforced`
+  * ACL-based object ownership and permissions are disabled.
+
+The configuration was validated through three mechanisms:
+
+1. **Terraform validation**
+
+   * `terraform fmt`
+   * `terraform validate`
+   * `terraform plan`
+   * `terraform apply`
+
+2. **AWS CLI verification**
+
+   * S3 Versioning confirmed as `Enabled`.
+   * Server-side encryption confirmed as `AES256`.
+   * All four public-access-block controls confirmed as `true`.
+   * Object ownership confirmed as `BucketOwnerEnforced`.
+   * Bucket existence and region confirmed through `head-bucket`.
+
+3. **AWS Console verification**
+
+   * The bucket configuration was inspected directly in the AWS Console.
+   * Screenshots were captured as visual evidence of:
+
+     * default SSE-S3 encryption,
+     * public access protection,
+     * and object ownership configuration.
+
+The S3 foundation is intentionally implemented as one physical bucket with multiple infrastructure-level configuration controls. Logical data-lake layers such as `raw/`, `standardized/`, and `curated/` will be addressed later as part of the data processing architecture.
+
+The deployment remains ephemeral and will be destroyed after the documentation milestone is captured, consistent with the project's AWS infrastructure strategy.
