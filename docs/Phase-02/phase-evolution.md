@@ -1772,3 +1772,205 @@ The configuration was validated through three mechanisms:
 The S3 foundation is intentionally implemented as one physical bucket with multiple infrastructure-level configuration controls. Logical data-lake layers such as `raw/`, `standardized/`, and `curated/` will be addressed later as part of the data processing architecture.
 
 The deployment remains ephemeral and will be destroyed after the documentation milestone is captured, consistent with the project's AWS infrastructure strategy.
+
+### AWS Glue Data Catalog Validation
+
+After validating the S3 data lake foundation, the next Phase 2 milestone was the integration of AWS Glue Data Catalog.
+
+The objective was to make the standardized domain datasets stored in S3 discoverable through AWS Glue Data Catalog and to validate the relationship between S3 data, Glue metadata, and the crawler.
+
+#### S3 standardized datasets
+
+The three standardized domain datasets were uploaded to:
+
+```text
+s3://mlops-engineering-data-lake-882507341805/standardized/
+├── customer/customer.csv
+├── financial_history/financial_history.csv
+└── loan_application/loan_application.csv
+```
+
+The original source dataset remained conceptually separate from these standardized domain datasets.
+
+#### Glue Data Catalog database
+
+A Glue Data Catalog database was created:
+
+```text
+mlops_engineering_data_lake
+```
+
+This database provides the metadata layer for the standardized datasets stored in S3.
+
+#### Glue crawler
+
+A crawler was created with the following configuration:
+
+```text
+Crawler:
+mlops-standardized-data-crawler
+
+S3 target:
+s3://mlops-engineering-data-lake-882507341805/standardized/
+
+Database:
+mlops_engineering_data_lake
+
+Schedule:
+On demand
+```
+
+The crawler was initially unable to discover the datasets because its IAM role did not have permission to read the S3 objects.
+
+#### IAM permission issue and resolution
+
+The crawler initially used:
+
+```text
+MLOpsGlueCrawlerRole
+```
+
+with the AWS-managed:
+
+```text
+AWSGlueServiceRole
+```
+
+policy.
+
+The crawler execution completed, but CloudWatch logs showed:
+
+```text
+glue.amazonaws.com is not authorized to perform:
+s3:GetObject
+```
+
+The issue was therefore identified as an S3 data-access permission problem rather than a crawler configuration failure.
+
+A dedicated inline policy was added to the crawler role:
+
+```text
+MLOpsGlueCrawlerS3ReadAccess
+```
+
+The policy grants only the permissions required by the crawler:
+
+```text
+s3:ListBucket
+s3:GetObject
+```
+
+The permissions were restricted to the project S3 bucket and the `standardized/` prefix.
+
+This established a least-privilege access model instead of granting broad S3 permissions.
+
+#### Crawler validation
+
+After the IAM policy was added, the crawler was executed again.
+
+The crawler completed successfully and the Data Catalog contained three tables:
+
+```text
+customer
+financial_history
+loan_application
+```
+
+Their S3 locations were validated as:
+
+```text
+customer
+s3://mlops-engineering-data-lake-882507341805/standardized/customer/
+
+financial_history
+s3://mlops-engineering-data-lake-882507341805/standardized/financial_history/
+
+loan_application
+s3://mlops-engineering-data-lake-882507341805/standardized/loan_application/
+```
+
+#### Schema validation
+
+The crawler successfully inferred the expected schemas.
+
+Customer:
+
+```text
+customer_id         string
+age                 bigint
+income              bigint
+home_ownership      string
+employment_length   double
+```
+
+Financial History:
+
+```text
+customer_id             string
+default_history         string
+credit_history_length   bigint
+```
+
+Loan Application:
+
+```text
+application_id       string
+customer_id          string
+loan_amount          bigint
+loan_purpose         string
+risk_grade           string
+loan_interest_rate   double
+loan_income_ratio    double
+loan_outcome         bigint
+```
+
+#### Validation evidence
+
+AWS Console screenshots were captured showing:
+
+* the Glue Data Catalog database and its three tables;
+* the `customer` table schema and S3 location;
+* the successful crawler execution.
+
+#### Architectural outcome
+
+The validated metadata flow is:
+
+```text
+S3 Standardized Data
+        │
+        ▼
+Glue Crawler
+        │
+        ▼
+Glue Data Catalog
+        │
+        ├── customer
+        ├── financial_history
+        └── loan_application
+```
+
+This establishes the metadata/catalog layer required for subsequent Athena-based exploration and validation.
+
+#### Infrastructure lifecycle decision
+
+The Glue environment used during this milestone is considered temporary learning infrastructure.
+
+The manually validated IAM configuration will be codified in Terraform before the Glue environment is recreated.
+
+The target infrastructure will include:
+
+```text
+Terraform
+    │
+    ├── Glue IAM role
+    ├── Glue IAM policies
+    ├── Glue Data Catalog database
+    └── Glue crawler
+```
+
+This separates the initial manual AWS validation from the subsequent infrastructure-as-code implementation.
+
+The Glue environment will be destroyed after today's validation to keep the AWS learning account clean and minimize unnecessary AWS usage.
+
+The next Phase 2 implementation step will be to reproduce the validated Glue IAM and Data Catalog foundation through Terraform.
