@@ -1974,3 +1974,283 @@ This separates the initial manual AWS validation from the subsequent infrastruct
 The Glue environment will be destroyed after today's validation to keep the AWS learning account clean and minimize unnecessary AWS usage.
 
 The next Phase 2 implementation step will be to reproduce the validated Glue IAM and Data Catalog foundation through Terraform.
+
+### Terraform Automation and Athena Console Validation
+
+This stage converted the AWS data-foundation configuration discovered and validated manually during the previous Glue Data Catalog session into reproducible Terraform-managed infrastructure and completed the Athena Console validation of the resulting platform.
+
+#### Terraform Automation of the AWS Data Foundation
+
+The previous Glue implementation identified the required AWS resources and revealed an operational permission requirement: the Glue crawler needed explicit S3 read access to inspect the standardized datasets.
+
+That configuration was codified in Terraform rather than recreated manually.
+
+Terraform now manages:
+
+* Amazon S3 data lake bucket.
+* S3 bucket versioning.
+* S3 server-side encryption.
+* S3 public access blocking.
+* S3 ownership controls.
+* The three standardized domain datasets as `aws_s3_object` resources.
+* Glue crawler IAM role.
+* AWS-managed Glue service-role permissions.
+* Least-privilege S3 read permissions for the Glue crawler.
+* Glue Data Catalog database.
+* Glue crawler targeting the standardized S3 layer.
+
+The three existing validated domain datasets were imported into Terraform state and the manually created AWS environment was subsequently destroyed before performing a clean Terraform deployment.
+
+The clean deployment completed successfully:
+
+```text
+Apply complete! Resources: 13 added, 0 changed, 0 destroyed.
+```
+
+Terraform state contained the expected S3, IAM, Glue Catalog, and Glue crawler resources.
+
+Terraform validation also completed successfully:
+
+```text
+terraform validate
+Success! The configuration is valid.
+```
+
+A subsequent Terraform plan reported no infrastructure drift:
+
+```text
+No changes. Your infrastructure matches the configuration.
+```
+
+This established that the AWS data foundation can be reconstructed from the repository rather than depending on manually configured AWS resources.
+
+#### Glue Data Catalog Validation
+
+The Terraform-managed Glue crawler was executed successfully against the standardized S3 layer.
+
+The crawler discovered the expected three tables:
+
+* `customer`
+* `financial_history`
+* `loan_application`
+
+The discovered schemas matched the previously validated local domain datasets.
+
+The Glue Data Catalog therefore provides the metadata layer required by downstream query and analytics services without moving the underlying datasets out of Amazon S3.
+
+#### Athena Query Configuration
+
+The Athena Query Editor was inspected through the AWS Console using the `primary` workgroup.
+
+The query editor exposed:
+
+* Data source: `AwsDataCatalog`
+* Database: `mlops_engineering_data_lake`
+* Tables:
+
+  * `customer`
+  * `financial_history`
+  * `loan_application`
+
+Athena query results were configured to use the existing S3 location:
+
+```text
+s3://mlops-engineering-data-lake-882507341805/athena-results/
+```
+
+This separates the source datasets from Athena-generated query-result objects.
+
+The resulting logical organization is:
+
+```text
+mlops-engineering-data-lake-882507341805/
+│
+├── standardized/
+│   ├── customer/customer.csv
+│   ├── financial_history/financial_history.csv
+│   └── loan_application/loan_application.csv
+│
+└── athena-results/
+    └── Athena query result objects
+```
+
+#### Athena Console Validation
+
+Athena was validated interactively through the AWS Console rather than exclusively through the CLI.
+
+##### Metadata validation
+
+The following query successfully returned the three Glue Catalog tables:
+
+```sql
+SHOW TABLES;
+```
+
+Result:
+
+```text
+customer
+financial_history
+loan_application
+```
+
+No underlying data was scanned for this metadata operation.
+
+##### Data-access validation
+
+The following query successfully queried the S3-backed `customer` dataset:
+
+```sql
+SELECT COUNT(*) AS row_count
+FROM customer;
+```
+
+Result:
+
+```text
+row_count = 32581
+```
+
+Athena reported approximately 914.55 KB of data scanned.
+
+This matched the previously validated local dataset and the earlier CLI validation.
+
+##### Analytical query validation
+
+Athena was also used to perform an aggregation over the `loan_application` dataset:
+
+```sql
+SELECT risk_grade, COUNT(*) AS application_count
+FROM loan_application
+GROUP BY risk_grade
+ORDER BY risk_grade;
+```
+
+The result matched the previously established domain EDA distribution:
+
+| Risk grade | Application count |
+| ---------- | ----------------: |
+| A          |            10,777 |
+| B          |            10,451 |
+| C          |             6,458 |
+| D          |             3,626 |
+| E          |               964 |
+| F          |               241 |
+| G          |                64 |
+
+Athena reported approximately 1.48 MB of data scanned.
+
+#### Athena Query History
+
+The Athena Console Query History was inspected to understand operational query metadata.
+
+The history exposed:
+
+* Query execution IDs.
+* Query text.
+* Execution timestamps.
+* Query status.
+* Execution duration.
+* Data scanned.
+* Athena engine version.
+* Query-result S3 locations.
+* Cache status.
+* Result-management information.
+
+The executions used Athena engine version 3 and successfully produced query-result objects under the configured S3 prefix.
+
+This demonstrated that Athena is not a database containing copied datasets. It is a serverless query engine that uses Glue Data Catalog metadata to interpret and query data stored in Amazon S3.
+
+#### Architecture Validation
+
+The complete validated architecture is now:
+
+```text
+Validated Local Domain Data
+            │
+            ▼
+        Terraform
+            │
+            ▼
+      Amazon S3 Data Lake
+       standardized/
+            │
+            ▼
+       Glue Crawler
+            │
+            ▼
+   Glue Data Catalog
+            │
+            ▼
+      Amazon Athena
+            │
+       SQL queries
+            │
+            ├── metadata validation
+            ├── row-count validation
+            └── analytical aggregation
+            │
+            ▼
+     athena-results/
+```
+
+The roles of the services are clearly separated:
+
+* **Amazon S3** stores the actual datasets.
+* **AWS Glue Crawler** discovers dataset structure and schema.
+* **Glue Data Catalog** stores metadata describing the datasets.
+* **Amazon Athena** queries the S3 data using that metadata.
+* **Terraform** provides reproducible infrastructure configuration.
+
+#### Engineering Lessons
+
+This implementation established several important engineering principles:
+
+1. AWS infrastructure discovered manually should be codified when it becomes part of the reproducible platform.
+2. Data storage, metadata management, and query execution are separate concerns.
+3. Glue Catalog metadata does not replace the underlying S3 data.
+4. Athena can query S3 data directly without loading it into a traditional database.
+5. Athena query cost is related to the amount of data scanned, making query design and data organization operational concerns.
+6. Metadata queries such as `SHOW TABLES` can validate catalog connectivity without scanning the underlying datasets.
+7. Query results are separate S3 objects and must be considered during lifecycle and infrastructure cleanup.
+8. Manual AWS experimentation is useful for discovering the required configuration, while Terraform is used to make the final infrastructure reproducible.
+9. The local repository remains the reconstruction source for the learning environment; AWS resources are treated as ephemeral execution infrastructure.
+
+#### Phase 2 Status After This Stage
+
+```text
+1. Source / Domain Design
+   ✓ Complete
+
+2. Domain-Level EDA
+   ✓ Complete
+
+3. AWS Data Foundation
+   ✓ S3
+   ✓ Glue Data Catalog
+   ✓ Athena CLI validation
+   ✓ Athena Console validation
+
+4. Source / Ingestion Validation
+   → Next major milestone
+
+5. Domain Processing / Standardization
+   → Pending
+
+6. Cross-Domain Integration
+   → Pending
+
+7. Curated Dataset Validation
+   → Pending
+
+8. ML Dataset EDA
+   → Pending
+
+9. ML Preprocessing
+   → Pending
+
+10. Training-Ready Dataset
+   → Pending
+```
+
+The AWS data foundation is therefore considered technically validated before moving into the next Phase 2 milestone.
