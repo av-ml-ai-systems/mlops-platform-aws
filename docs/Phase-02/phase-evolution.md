@@ -2254,3 +2254,137 @@ This implementation established several important engineering principles:
 ```
 
 The AWS data foundation is therefore considered technically validated before moving into the next Phase 2 milestone.
+
+## Dataset Validation Component
+
+The next Phase 2 milestone was the implementation of a reusable dataset validation component for the standardized domain datasets.
+
+The objective was to establish a validation boundary between domain-level processing and the future cross-domain integration step. Validation was intentionally separated from cleaning and preprocessing: the validator evaluates whether a dataset satisfies its defined contract but does not automatically modify or repair the data.
+
+Three domain-specific validation modules were implemented:
+
+- Customer Profile
+- Financial History
+- Loan Application
+
+The validation component was organized into:
+
+- domain-specific validation rules
+- shared validation execution
+- structured validation results
+- dataset-level validation reports
+
+Each validation rule produces a structured result containing:
+
+- rule name
+- PASS / WARNING / FAIL status
+- severity
+- validation message
+- number of affected rows
+
+The complete validation execution is represented by a `ValidationReport`. Its overall status is derived from the individual rule results:
+
+- any FAIL → overall FAIL
+- otherwise any WARNING → overall WARNING
+- otherwise → PASS
+
+### Validation Rules Implemented
+
+The Customer Profile validator checks:
+
+- expected schema
+- expected data types
+- customer identifier presence and uniqueness
+- valid age and income values
+- allowed home-ownership categories
+- employment-length consistency with customer age
+
+The Financial History validator checks:
+
+- expected schema
+- expected data types
+- customer identifier presence and uniqueness
+- valid default-history values
+- valid credit-history length
+
+The Loan Application validator checks:
+
+- expected schema
+- expected data types
+- application identifier presence and uniqueness
+- customer identifier presence
+- valid loan amounts
+- valid loan-to-income ratios
+- allowed loan purposes
+- valid risk grades
+- valid loan outcomes
+
+The validation rules were intentionally based on defensible data contracts rather than arbitrary thresholds derived from observed values during EDA.
+
+### Validation Against the Real Domain Datasets
+
+The validators were executed against the actual domain datasets generated during Phase 2.
+
+The results were:
+
+- Customer Profile: FAIL — 2 employment-consistency violations
+- Financial History: PASS
+- Loan Application: PASS
+
+The two Customer Profile failures correspond to the two clearly inconsistent employment-history records identified during domain EDA.
+
+During implementation, the employment consistency rule was refined. An initial rule based on an estimated working-age assumption produced excessive false positives. The rule was therefore reduced to the defensible invariant that employment duration cannot exceed customer age.
+
+After this correction, the validator identified exactly the two records previously identified during EDA, demonstrating consistency between exploratory analysis and formal validation.
+
+The source datasets were not modified by the validation process.
+
+### Validation Tests and Engineering Quality
+
+A dedicated validation test module was added covering:
+
+- valid domain datasets
+- invalid employment history
+- invalid categorical values
+- invalid risk grades
+- validation report status behavior
+
+The complete project test suite passed:
+
+- 28 tests passed
+
+The validation modules also passed:
+
+- Ruff checks
+- Ruff formatting checks
+- MyPy
+- pre-commit hooks
+
+### Git Milestone
+
+The validation component was committed and pushed to the main branch.
+
+Commit:
+
+`2668222 feat: implement phase 2 dataset validation`
+
+This milestone establishes the validation layer for the individual domain datasets.
+
+### Next Step
+
+Individual domain validation is now complete.
+
+The next Phase 2 step is cross-domain integration using Athena. The validated Customer Profile, Financial History, and Loan Application datasets will be joined into a single authoritative curated ML dataset.
+
+The curated dataset will then require its own validation layer to verify:
+
+- join integrity
+- expected row cardinality
+- application uniqueness
+- customer referential integrity
+- final schema and data types
+- required ML features
+- target validity
+- final dataset quality
+
+Curated-dataset validation is therefore intentionally deferred until the Athena integration has been implemented.
