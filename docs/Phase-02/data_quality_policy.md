@@ -876,3 +876,192 @@ Curated Data
 The validation process should be **reproducible and auditable** so that the same rules can be applied consistently to future data.
 
 The detailed implementation of these rules belongs to the Preprocessing Policy and pipeline, not to this document.
+
+# 11. Domain Cleaning and Standardization Policy
+
+## 11.1 Purpose
+
+Define the rules and procedures for cleaning and standardizing the three domain datasets before cross-domain integration through Amazon Athena.
+
+The objective is to improve data quality while preserving valid business information, avoiding unjustified data loss, and ensuring that every cleaning operation is reproducible, measurable, and traceable.
+
+## 11.2 Scope
+
+This policy applies to the following domain datasets:
+
+* **Customer Profile:** customer identifiers, age, income, home ownership, and employment length.
+* **Financial History:** customer identifiers, default history, and credit history length.
+* **Loan Application:** application identifiers, customer identifiers, loan attributes, interest rates, and loan outcomes.
+
+Domain cleaning and standardization take place before the datasets are integrated into the curated dataset.
+
+Machine learning preprocessing operations, including imputation, categorical encoding, feature scaling, and train/validation/test splitting, belong to a later stage of the pipeline and are outside the scope of this policy.
+
+## 11.3 Cleaning Principles
+
+The domain cleaning process must follow these principles:
+
+1. **Preserve valid information:** Do not modify or remove valid observations merely because their values are extreme, uncommon, or statistically unusual.
+2. **Correct only unambiguous errors:** Apply automatic corrections only when the intended value can be determined reliably from the data and established business rules.
+3. **Avoid arbitrary deletion:** Do not delete records containing unresolved inconsistencies simply to make validation pass.
+4. **Preserve legitimate missing values:** Do not replace missing values with invented or statistically estimated values at the domain cleaning stage.
+5. **Separate correction from validation:** Cleaning performs authorized transformations; validation evaluates whether the resulting dataset satisfies its quality requirements.
+6. **Maintain traceability:** Record the number and type of changes made during each cleaning execution.
+7. **Preserve input data:** Cleaning operations must not modify the original input DataFrame or raw source files.
+8. **Support reproducibility:** The same input data and cleaning rules must produce the same cleaned output and cleaning report.
+
+## 11.4 Duplicate Record Handling
+
+### Exact duplicate rows
+
+Identify exact duplicate rows within each domain dataset.
+
+Because the Customer Profile dataset represents one record per customer, exact duplicate rows may be removed after their presence is recorded. The cleaning report must include the number of removed rows.
+
+### Duplicate business identifiers
+
+Business identifiers must remain unique within their respective datasets.
+
+* **Customer Profile:** `customer_id` must be unique.
+* **Financial History:** `customer_id` must be unique.
+* **Loan Application:** `application_id` must be unique.
+
+If multiple records share the same business identifier but contain different values, the cleaning process must not arbitrarily retain one record or merge the records without an established business rule.
+
+Such cases must be reported as unresolved data quality issues. The affected dataset must not be considered ready for integration until the issue has been resolved or explicitly accepted through a documented decision.
+
+## 11.5 Missing Value Handling
+
+Missing values must be handled according to their business meaning and the established Missing Value Policy in Section 7.
+
+For Customer Profile:
+
+* Missing `employment_length` values must be preserved.
+* Cleaning must not replace missing employment lengths with zero, the mean, the median, or an estimated value.
+* Missing values must be reported and remain available for later processing.
+
+For Loan Application:
+
+* Missing `loan_interest_rate` values must be preserved.
+* Cleaning must not infer interest rates from loan grades or other attributes without an authoritative business rule.
+
+Missing values that are permitted by the domain contract must not automatically cause cleaning to fail.
+
+Imputation, where appropriate, will be performed later during machine learning preprocessing.
+
+## 11.6 Invalid Values and Business Rule Corrections
+
+### Customer age
+
+The `age` field must contain valid numeric values, and customers must satisfy the established minimum age requirement of 18 years.
+
+Records with ages below 18 must be reported as unresolved data quality issues. The cleaning process must not invent replacement ages or silently delete these records.
+
+### Employment length
+
+The `employment_length` field must not exceed the customer's age.
+
+When `employment_length > age`, the employment length is inconsistent with the customer record. Because the correct employment length cannot be inferred reliably, the cleaning process must set the affected `employment_length` value to missing and record the number of corrected values.
+
+The original raw dataset must remain unchanged, allowing the correction to be traced back to its source.
+
+Missing employment lengths must remain missing and must not be counted as violations of this rule.
+
+### Income
+
+The `income` field must contain nonnegative values.
+
+Negative income values must be reported as unresolved data quality issues. The cleaning process must not convert them to zero or replace them with estimated values without an authoritative business rule.
+
+Valid high-income observations must be preserved.
+
+### Categorical standardization
+
+Categorical fields may be standardized when the intended value is unambiguous.
+
+For example, leading or trailing whitespace and inconsistent letter casing may be normalized to the canonical representation defined by the domain contract.
+
+The process must not map unknown or ambiguous category values to an existing category merely to satisfy validation requirements. Unrecognized values must be reported for investigation.
+
+### Loan-to-income ratio
+
+The `loan_income_ratio` field must satisfy the established domain constraints.
+
+The cleaning process must not recalculate this field from `loan_amount` and `income` unless the authoritative business definition and calculation rules have been established. Differences from a simple calculated ratio must not automatically be treated as errors.
+
+## 11.7 Outlier Handling
+
+Outlier treatment must follow the Outlier Policy in Section 9.
+
+Statistical extremity alone is not sufficient evidence that a record is invalid.
+
+Examples of values that must not be removed solely because they are uncommon include:
+
+* High but valid customer income.
+* Unusually long but plausible employment history.
+* Rare loan grades, including grades F and G.
+* Unusually high or low loan attributes that remain within the established domain constraints.
+
+Only violations supported by explicit business rules may trigger automatic correction. Other unusual observations must be preserved and reported when relevant.
+
+## 11.8 Cleaning Execution and Reporting
+
+Each domain cleaning component must implement the applicable rules for its dataset.
+
+The cleaning process must:
+
+1. Receive the domain dataset as input.
+2. Verify that the required columns are available before applying transformations.
+3. Identify and handle exact duplicate rows according to this policy.
+4. Apply authorized corrections and standardization rules.
+5. Preserve legitimate missing values and valid extreme observations.
+6. Report unresolved data quality issues without silently deleting affected records.
+7. Produce a cleaned dataset and a structured cleaning report.
+8. Allow the cleaned dataset to be passed to the corresponding domain validation component.
+
+The cleaning report must record, at a minimum:
+
+* Input row count.
+* Output row count.
+* Number of exact duplicate rows removed.
+* Number of values corrected or standardized, by rule.
+* Number of unresolved issues detected, by rule.
+* The dataset and cleaning execution identifier, when execution tracking is available.
+
+Cleaning reports must distinguish between automatic corrections and unresolved issues. A successful execution of the cleaning code does not, by itself, mean that the dataset has passed validation.
+
+## 11.9 Relationship with Domain Validation
+
+Domain cleaning and domain validation are separate responsibilities.
+
+Cleaning applies the transformations permitted by this policy. Domain validation evaluates the cleaned dataset against the applicable schema, data types, identifier uniqueness, allowed categories, missing-value rules, and business constraints.
+
+The intended sequence is:
+
+1. Load a domain dataset.
+2. Apply domain cleaning and standardization.
+3. Generate the cleaning report.
+4. Validate the cleaned dataset.
+5. Review and resolve validation failures before proceeding to integration.
+
+A dataset that still contains unresolved errors must not be treated as production-ready merely because the cleaning process completed.
+
+The existing domain validation component remains responsible for determining whether a cleaned dataset satisfies its validation contract.
+
+## 11.10 Data Lineage and Reproducibility
+
+Every cleaning execution must preserve the relationship between the source dataset and its cleaned output.
+
+As the pipeline evolves, execution metadata should include:
+
+* Source dataset identifier and version.
+* Cleaning component or code version.
+* Applied cleaning rules.
+* Execution timestamp and identifier.
+* Input and output row counts.
+* Cleaning report and unresolved issue counts.
+* Output dataset location and version, when applicable.
+
+These requirements support reproducibility, auditing, troubleshooting, and future orchestration through AWS services.
+
+The initial implementation may record this information locally. Integration with S3 versioning, pipeline execution metadata, and cloud orchestration will be introduced as the data platform evolves.

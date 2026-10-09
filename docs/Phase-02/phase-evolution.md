@@ -1,4 +1,4 @@
-# Phase 02 — Evolution
+﻿# Phase 02 â€” Evolution
 
 ## Purpose
 
@@ -26,15 +26,15 @@ The initial high-level direction was:
 
 ```text
 Data Sources
-    ↓
+    â†“
 S3 Data Lake
-    ↓
+    â†“
 Glue Data Catalog
-    ↓
+    â†“
 Athena
-    ↓
+    â†“
 SageMaker Processing
-    ↓
+    â†“
 Training-Ready Dataset
 ```
 
@@ -52,11 +52,11 @@ The monolithic dataset was decomposed into three technical business domains:
 
 ```text
 Monolithic Credit Risk Dataset
-            ↓
+            â†“
      Domain Decomposition
-            ↓
-┌───────────┼────────────┐
-│           │            │
+            â†“
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚           â”‚            â”‚
 Customer   Financial    Loan
 Profile    History      Application
 ```
@@ -216,13 +216,13 @@ The refined concept is:
 
 ```text
 EDA Finding
-    ↓
+    â†“
 Potential Quality / Business Rule
-    ↓
+    â†“
 Determine Authoritative Definition
-    ↓
+    â†“
 Implement Validation Rule
-    ↓
+    â†“
 Define Appropriate Action
 ```
 
@@ -230,9 +230,9 @@ The action following a validation failure may depend on the nature of the proble
 
 ```text
 Validation Failure
-        ↓
-┌───────┼────────┬────────────┐
-│       │        │            │
+        â†“
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚       â”‚        â”‚            â”‚
 Reject  Quarantine Correct   Investigate
 ```
 
@@ -311,35 +311,35 @@ The Phase 02 architecture was therefore refined into the following lifecycle:
 
 ```text
                     SOURCE DATA
-                        │
-                        ▼
+                        â”‚
+                        â–¼
               Source / Ingestion Layer
-                        │
-                ┌───────┴────────┐
-                │ Validation     │
-                │ Basic cleaning │
-                └───────┬────────┘
-                        │
-                        ▼
+                        â”‚
+                â”Œâ”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”
+                â”‚ Validation     â”‚
+                â”‚ Basic cleaning â”‚
+                â””â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                        â”‚
+                        â–¼
               Standardized / Curated
                    Domain Data
-                        │
-                        ▼
+                        â”‚
+                        â–¼
                  Domain-Level EDA
-                        │
-                        ▼
+                        â”‚
+                        â–¼
               Domain Validation
-                        │
-                        ▼
+                        â”‚
+                        â–¼
               Curated ML Dataset
-                        │
-                        ▼
+                        â”‚
+                        â–¼
               ML Dataset EDA
-                        │
-                        ▼
+                        â”‚
+                        â–¼
           ML Preprocessing / Features
-                        │
-                        ▼
+                        â”‚
+                        â–¼
               Training-Ready Dataset
 ```
 
@@ -353,55 +353,55 @@ At the current milestone, the Phase 02 implementation has progressed through:
 
 ```text
 1. Domain Design
-       ✓ Complete
+       âœ“ Complete
 
 2. Domain Decomposition
-       ✓ Complete
+       âœ“ Complete
 
 3. Domain-Level EDA
-       ✓ Complete
+       âœ“ Complete
 
 4. AWS Data Foundation
-       │
-       ├── Amazon S3
-       ├── AWS Glue
-       ├── Glue Data Catalog
-       └── Amazon Athena
+       â”‚
+       â”œâ”€â”€ Amazon S3
+       â”œâ”€â”€ AWS Glue
+       â”œâ”€â”€ Glue Data Catalog
+       â””â”€â”€ Amazon Athena
 
 5. Source / Ingestion Validation
-       │
-       └── Structural and basic data-quality controls
+       â”‚
+       â””â”€â”€ Structural and basic data-quality controls
 
 6. Domain Processing / Standardization
-       │
-       └── AWS Glue
+       â”‚
+       â””â”€â”€ AWS Glue
 
 7. Cross-Domain Integration
-       │
-       └── Curated ML Dataset
+       â”‚
+       â””â”€â”€ Curated ML Dataset
 
 8. Curated Dataset Validation
-       │
-       └── Business, consistency, and quality rules
+       â”‚
+       â””â”€â”€ Business, consistency, and quality rules
 
 9. ML Dataset EDA
-       │
-       └── Analysis of the integrated curated dataset
+       â”‚
+       â””â”€â”€ Analysis of the integrated curated dataset
 
 10. ML Preprocessing
-       │
-       ├── Missing-value strategy
-       ├── Encoding
-       ├── Transformations
-       └── Training / inference consistency
+       â”‚
+       â”œâ”€â”€ Missing-value strategy
+       â”œâ”€â”€ Encoding
+       â”œâ”€â”€ Transformations
+       â””â”€â”€ Training / inference consistency
 
 11. Training-Ready Dataset
-       │
-       └── Versioning and metadata
+       â”‚
+       â””â”€â”€ Versioning and metadata
 
 12. Dataset Versioning / Lineage
-       │
-       └── Reproducibility
+       â”‚
+       â””â”€â”€ Reproducibility
 ```
 
 Only the first three stages are currently complete.
@@ -420,11 +420,11 @@ The intended execution model is:
 
 ```text
 Reusable Transformation Logic
-             ↓
+             â†“
       Python / PySpark
-             ↓
-      ┌──────┴──────┐
-      ↓             ↓
+             â†“
+      â”Œâ”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”
+      â†“             â†“
 Local Execution   AWS Glue Execution
 ```
 
@@ -467,56 +467,56 @@ The refined architecture now distinguishes between source-level validation and v
 
 ```text
 SOURCE DATA
-    │
-    ▼
+    â”‚
+    â–¼
 Source / Ingestion
-    │
-    ├── Source validation
-    └── Basic structural cleaning
-    │
-    ▼
+    â”‚
+    â”œâ”€â”€ Source validation
+    â””â”€â”€ Basic structural cleaning
+    â”‚
+    â–¼
 Standardized Domain Data
-    │
-    ▼
+    â”‚
+    â–¼
 Domain-Level EDA
-    │
-    ▼
+    â”‚
+    â–¼
 Domain Processing / Standardization
-    │
-    └── AWS Glue
-    │
-    ▼
+    â”‚
+    â””â”€â”€ AWS Glue
+    â”‚
+    â–¼
 Cross-Domain Integration
-    │
-    ▼
+    â”‚
+    â–¼
 CURATED ML DATASET
-    │
-    ▼
-┌──────────────────────────────────┐
-│      CURATED DATA VALIDATION     │
-│                                  │
-│  Schema validation               │
-│  Data-type validation            │
-│  Required-column validation      │
-│  Identifier validation           │
-│  Null / missing-value checks     │
-│  Domain/business rules           │
-│  Cross-column consistency        │
-│  Dataset integrity checks        │
-└──────────────────────────────────┘
-    │
-    ├── PASS ───────────────────┐
-    │                           │
-    └── FAIL → reject /         │
-               quarantine /     │
-               investigate      │
-                                ▼
+    â”‚
+    â–¼
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚      CURATED DATA VALIDATION     â”‚
+â”‚                                  â”‚
+â”‚  Schema validation               â”‚
+â”‚  Data-type validation            â”‚
+â”‚  Required-column validation      â”‚
+â”‚  Identifier validation           â”‚
+â”‚  Null / missing-value checks     â”‚
+â”‚  Domain/business rules           â”‚
+â”‚  Cross-column consistency        â”‚
+â”‚  Dataset integrity checks        â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+    â”‚
+    â”œâ”€â”€ PASS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+    â”‚                           â”‚
+    â””â”€â”€ FAIL â†’ reject /         â”‚
+               quarantine /     â”‚
+               investigate      â”‚
+                                â–¼
                          ML Dataset EDA
-                                │
-                                ▼
+                                â”‚
+                                â–¼
                        ML Preprocessing
-                                │
-                                ▼
+                                â”‚
+                                â–¼
                       Training-Ready Dataset
 ```
 
@@ -547,11 +547,11 @@ The validation component should be able to detect situations such as:
 ```text
 Expected                         Actual
 
-customer_id → string             customer_id → string       ✓
-age         → integer             age         → string       ✗
-income      → numeric             income      → numeric      ✓
-home_ownership → string           home_ownership → string    ✓
-employment_length → numeric      missing column             ✗
+customer_id â†’ string             customer_id â†’ string       âœ“
+age         â†’ integer             age         â†’ string       âœ—
+income      â†’ numeric             income      â†’ numeric      âœ“
+home_ownership â†’ string           home_ownership â†’ string    âœ“
+employment_length â†’ numeric      missing column             âœ—
 ```
 
 Schema validation should therefore verify more than whether a file can be loaded.
@@ -583,7 +583,7 @@ For example:
 age
 Expected: integer
 Actual:   string
-→ FAIL
+â†’ FAIL
 ```
 
 The implementation should distinguish between genuinely incompatible types and technically different representations that are still compatible.
@@ -625,7 +625,7 @@ The distinction is:
 
 ```text
 Missing column
-    ↓
+    â†“
 Schema / Data Contract Validation
 ```
 
@@ -633,9 +633,9 @@ versus:
 
 ```text
 Column exists
-    │
-    └── Some values are missing
-            ↓
+    â”‚
+    â””â”€â”€ Some values are missing
+            â†“
 Data Quality / Preprocessing
 ```
 
@@ -651,20 +651,20 @@ Its responsibilities can be organized into several categories:
 
 ```text
 Validation Engine
-      │
-      ├── Structural validation
-      │
-      ├── Schema validation
-      │
-      ├── Data-type validation
-      │
-      ├── Required-field validation
-      │
-      ├── Identifier / integrity validation
-      │
-      ├── Data-quality validation
-      │
-      └── Business-rule validation
+      â”‚
+      â”œâ”€â”€ Structural validation
+      â”‚
+      â”œâ”€â”€ Schema validation
+      â”‚
+      â”œâ”€â”€ Data-type validation
+      â”‚
+      â”œâ”€â”€ Required-field validation
+      â”‚
+      â”œâ”€â”€ Identifier / integrity validation
+      â”‚
+      â”œâ”€â”€ Data-quality validation
+      â”‚
+      â””â”€â”€ Business-rule validation
 ```
 
 Examples include:
@@ -720,9 +720,9 @@ The conceptual flow is:
 
 ```text
 Validation Failure
-        ↓
-┌───────┼──────────┬────────────┐
-│       │          │            │
+        â†“
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚       â”‚          â”‚            â”‚
 Reject  Quarantine Correct   Investigate
 ```
 
@@ -772,43 +772,43 @@ The architectural evolution also clarified that validation should not necessaril
 
 Two distinct validation stages are useful.
 
-### Validation A — Source / Ingestion Validation
+### Validation A â€” Source / Ingestion Validation
 
 This protects the data platform from structurally unusable incoming data.
 
 ```text
 Source
-  ↓
+  â†“
 Schema
 Types
 Required fields
 Basic structural integrity
 Basic data-quality controls
-  ↓
+  â†“
 Standardized Domain Data
 ```
 
 Its purpose is to establish that incoming data can safely enter the data platform.
 
-### Validation B — Curated ML Dataset Validation
+### Validation B â€” Curated ML Dataset Validation
 
 This protects the ML system from an invalid curated dataset.
 
 ```text
 Curated ML Dataset
-       ↓
+       â†“
 Schema / Data Contract
-       ↓
+       â†“
 Data Quality
-       ↓
+       â†“
 Business Rules
-       ↓
+       â†“
 Cross-Domain Consistency
-       ↓
+       â†“
 ML Dataset Accepted / Rejected
-       ↓
+       â†“
 ML Dataset EDA
-       ↓
+       â†“
 ML Preprocessing
 ```
 
@@ -824,20 +824,20 @@ Instead, the responsibilities are separated:
 
 ```text
 Curated ML Dataset
-        │
-        ▼
+        â”‚
+        â–¼
 Validation
-        │
-        │  Is this dataset acceptable?
-        ▼
+        â”‚
+        â”‚  Is this dataset acceptable?
+        â–¼
 Accepted Dataset
-        │
-        ▼
+        â”‚
+        â–¼
 ML Preprocessing
-        │
-        │  How should this dataset be transformed
-        │  for machine learning?
-        ▼
+        â”‚
+        â”‚  How should this dataset be transformed
+        â”‚  for machine learning?
+        â–¼
 Training-Ready Dataset
 ```
 
@@ -882,19 +882,19 @@ The intended sequence is:
 
 ```text
 AWS Data Foundation
-        ↓
+        â†“
 Domain Processing
-        ↓
+        â†“
 Cross-Domain Integration
-        ↓
+        â†“
 Curated ML Dataset
-        ↓
+        â†“
 Curated Dataset Validation
-        ↓
+        â†“
 ML Dataset EDA
-        ↓
+        â†“
 ML Preprocessing
-        ↓
+        â†“
 Training-Ready Dataset
 ```
 
@@ -926,30 +926,30 @@ The addition of the validation layer represents an important evolution of Phase 
 The project is no longer treating the data pipeline simply as:
 
 ```text
-Data → Cleaning → Features
+Data â†’ Cleaning â†’ Features
 ```
 
 Instead, the architecture is evolving toward:
 
 ```text
 Data
-  ↓
+  â†“
 Ingestion
-  ↓
+  â†“
 Validation
-  ↓
+  â†“
 Standardization
-  ↓
+  â†“
 Integration
-  ↓
+  â†“
 Curated Dataset
-  ↓
+  â†“
 Validation
-  ↓
+  â†“
 EDA
-  ↓
+  â†“
 ML Preprocessing
-  ↓
+  â†“
 Training-Ready Dataset
 ```
 
@@ -971,34 +971,34 @@ This results in the following operating model:
 
 ```text
                     LOCAL PROJECT
-                         │
-              ┌──────────┴──────────┐
-              │                     │
+                         â”‚
+              â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+              â”‚                     â”‚
         Terraform code         Application /
         configuration          processing code
-              │                     │
-              └──────────┬──────────┘
-                         │
-                         ▼
+              â”‚                     â”‚
+              â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                         â”‚
+                         â–¼
                 Provision AWS Resources
-                         │
-                         ▼
+                         â”‚
+                         â–¼
               Upload / Process / Validate
-                         │
-                         ▼
+                         â”‚
+                         â–¼
                Console Inspection
                   + Evidence
-                         │
-                         ▼
+                         â”‚
+                         â–¼
                   Document Results
-                         │
-                         ▼
+                         â”‚
+                         â–¼
                  Destroy Resources
-                         │
-                         ▼
+                         â”‚
+                         â–¼
                  AWS removed
-                         │
-                         ▼
+                         â”‚
+                         â–¼
               Recreate later from
                 local project
 ```
@@ -1033,26 +1033,26 @@ Conceptually, the project will contain:
 
 ```text
 mlops-platform-aws/
-│
-├── src/
-│   └── mlops_engineering_roadmap/
-│
-├── tests/
-│
-├── notebooks/
-│
-├── sql/
-│
-├── infrastructure/
-│   └── terraform/
-│       └── aws/
-│
-├── scripts/
-│
-├── docs/
-│   └── Phase-02/
-│
-└── README.md
+â”‚
+â”œâ”€â”€ src/
+â”‚   â””â”€â”€ mlops_engineering_roadmap/
+â”‚
+â”œâ”€â”€ tests/
+â”‚
+â”œâ”€â”€ notebooks/
+â”‚
+â”œâ”€â”€ sql/
+â”‚
+â”œâ”€â”€ infrastructure/
+â”‚   â””â”€â”€ terraform/
+â”‚       â””â”€â”€ aws/
+â”‚
+â”œâ”€â”€ scripts/
+â”‚
+â”œâ”€â”€ docs/
+â”‚   â””â”€â”€ Phase-02/
+â”‚
+â””â”€â”€ README.md
 ```
 
 The exact directory structure will evolve as Phase 2 is implemented. The important principle is that Terraform belongs **inside the project**, rather than being maintained as a separate external infrastructure project.
@@ -1074,32 +1074,32 @@ The resulting relationship is:
 
 ```text
                     LOCAL PROJECT
-                 ┌──────────────────┐
-                 │ Terraform        │
-                 │ Python/PySpark   │
-                 │ SQL              │
-                 │ Tests            │
-                 │ Configuration    │
-                 │ Documentation    │
-                 └────────┬─────────┘
-                          │
-                          │ terraform apply
-                          ▼
+                 â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+                 â”‚ Terraform        â”‚
+                 â”‚ Python/PySpark   â”‚
+                 â”‚ SQL              â”‚
+                 â”‚ Tests            â”‚
+                 â”‚ Configuration    â”‚
+                 â”‚ Documentation    â”‚
+                 â””â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                          â”‚
+                          â”‚ terraform apply
+                          â–¼
                     AWS ENVIRONMENT
-                          │
-                          │ validation
-                          ▼
+                          â”‚
+                          â”‚ validation
+                          â–¼
                     AWS RESOURCES
-                          │
-                          │ terraform destroy
-                          ▼
+                          â”‚
+                          â”‚ terraform destroy
+                          â–¼
                     AWS REMOVED
-                          │
-                          │
-                          └───────────────┐
-                                          │
-                       terraform apply    │
-                                          ▼
+                          â”‚
+                          â”‚
+                          â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+                                          â”‚
+                       terraform apply    â”‚
+                                          â–¼
                                    AWS RECREATED
 ```
 
@@ -1111,29 +1111,29 @@ The relationship is:
 
 ```text
                  LOCAL PROJECT
-                       │
-              ┌────────┴────────┐
-              ▼                 ▼
+                       â”‚
+              â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”
+              â–¼                 â–¼
        Local development       Git
        and execution       version history
-              │                 │
-              │                 ▼
-              │              GitHub
-              │        remote repository /
-              │        backup / portfolio
-              │
-              └───────────────┐
-                              ▼
+              â”‚                 â”‚
+              â”‚                 â–¼
+              â”‚              GitHub
+              â”‚        remote repository /
+              â”‚        backup / portfolio
+              â”‚
+              â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+                              â–¼
                      AWS reconstruction
 ```
 
 Therefore:
 
-* **Local project** → operational source for development and reconstruction.
-* **Terraform** → infrastructure definition and recreation mechanism.
-* **Git** → version control and historical record.
-* **GitHub** → remote repository, backup, and portfolio visibility.
-* **AWS** → temporary execution and validation environment.
+* **Local project** â†’ operational source for development and reconstruction.
+* **Terraform** â†’ infrastructure definition and recreation mechanism.
+* **Git** â†’ version control and historical record.
+* **GitHub** â†’ remote repository, backup, and portfolio visibility.
+* **AWS** â†’ temporary execution and validation environment.
 
 The AWS environment should never become the only place where the architecture exists.
 
@@ -1143,23 +1143,23 @@ Each AWS implementation session will follow a controlled lifecycle:
 
 ```text
 1. CREATE
-      │
-      ▼
+      â”‚
+      â–¼
 2. VERIFY
-      │
-      ▼
+      â”‚
+      â–¼
 3. INSPECT
-      │
-      ▼
+      â”‚
+      â–¼
 4. DOCUMENT
-      │
-      ▼
+      â”‚
+      â–¼
 5. SCREENSHOT / EVIDENCE
-      │
-      ▼
+      â”‚
+      â–¼
 6. DESTROY
-      │
-      ▼
+      â”‚
+      â–¼
 7. RECREATE LATER FROM THE LOCAL PROJECT
 ```
 
@@ -1196,14 +1196,14 @@ Cloud validation is therefore not based solely on successful Terraform execution
 
 ```text
 Terraform Apply
-      │
-      ▼
+      â”‚
+      â–¼
 Infrastructure Exists
-      │
-      ▼
+      â”‚
+      â–¼
 Functional Validation
-      │
-      ▼
+      â”‚
+      â–¼
 Expected AWS Behavior
 ```
 
@@ -1219,16 +1219,16 @@ Terraform remains the infrastructure definition.
 
 ```text
 Terraform
-   │
-   ├──► Defines infrastructure
-   │
-   └──► Recreates infrastructure
+   â”‚
+   â”œâ”€â”€â–º Defines infrastructure
+   â”‚
+   â””â”€â”€â–º Recreates infrastructure
 
 AWS Console
-   │
-   ├──► Inspect
-   ├──► Understand
-   └──► Capture evidence
+   â”‚
+   â”œâ”€â”€â–º Inspect
+   â”œâ”€â”€â–º Understand
+   â””â”€â”€â–º Capture evidence
 ```
 
 #### 4. Document
@@ -1267,16 +1267,16 @@ The implementation itself remains reproducible from the local project.
 
 ```text
 LOCAL PROJECT
-      │
-      │ authoritative implementation
-      ▼
+      â”‚
+      â”‚ authoritative implementation
+      â–¼
 AWS Resources
-      │
-      │ temporary validation
-      ▼
+      â”‚
+      â”‚ temporary validation
+      â–¼
 Screenshots / Evidence
-      │
-      ▼
+      â”‚
+      â–¼
 Documentation
 ```
 
@@ -1288,14 +1288,14 @@ The default policy is:
 
 ```text
 AWS resource created for validation
-             │
-             ▼
+             â”‚
+             â–¼
         Validate it
-             │
-             ▼
+             â”‚
+             â–¼
        Capture evidence
-             │
-             ▼
+             â”‚
+             â–¼
        Destroy resource
 ```
 
@@ -1322,15 +1322,15 @@ Therefore, the destruction process must account for:
 
 ```text
 S3 Bucket
-   │
-   ├── Current objects
-   │
-   └── Previous object versions
-             │
-             ▼
+   â”‚
+   â”œâ”€â”€ Current objects
+   â”‚
+   â””â”€â”€ Previous object versions
+             â”‚
+             â–¼
        Complete cleanup
-             │
-             ▼
+             â”‚
+             â–¼
        Bucket destruction
 ```
 
@@ -1346,22 +1346,22 @@ The intended process is:
 
 ```text
 LOCAL PROJECT
-      │
-      ├── Terraform
-      ├── Configuration
-      ├── Processing code
-      ├── Validation code
-      ├── Athena SQL
-      ├── Tests
-      └── Documentation
-             │
-             ▼
+      â”‚
+      â”œâ”€â”€ Terraform
+      â”œâ”€â”€ Configuration
+      â”œâ”€â”€ Processing code
+      â”œâ”€â”€ Validation code
+      â”œâ”€â”€ Athena SQL
+      â”œâ”€â”€ Tests
+      â””â”€â”€ Documentation
+             â”‚
+             â–¼
         terraform apply
-             │
-             ▼
+             â”‚
+             â–¼
        AWS infrastructure
-             │
-             ▼
+             â”‚
+             â–¼
        Repeat validation
 ```
 
@@ -1410,7 +1410,7 @@ The fundamental distinction is:
 
 ```text
 PERSISTENT
-──────────
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 Local project
 Terraform
 Tests
@@ -1418,11 +1418,11 @@ SQL
 Documentation
 Evidence
 Git history
-        │
-        │ recreates
-        ▼
+        â”‚
+        â”‚ recreates
+        â–¼
 EPHEMERAL
-──────────
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 AWS infrastructure
 AWS data
 AWS compute
@@ -1439,29 +1439,29 @@ With Terraform:
 
 ```text
 Local Project
-      │
-      ▼
+      â”‚
+      â–¼
 Terraform Configuration
-      │
-      ▼
+      â”‚
+      â–¼
 terraform apply
-      │
-      ▼
+      â”‚
+      â–¼
 AWS resources
-      │
-      ▼
+      â”‚
+      â–¼
 Validate
-      │
-      ▼
+      â”‚
+      â–¼
 terraform destroy
-      │
-      ▼
+      â”‚
+      â–¼
 AWS resources removed
-      │
-      ▼
+      â”‚
+      â–¼
 terraform apply
-      │
-      ▼
+      â”‚
+      â–¼
 AWS resources recreated
 ```
 
@@ -1488,15 +1488,15 @@ For example:
 
 ```text
 Normal pipeline
-      │
-      ├── Provision if explicitly required
-      ├── Process
-      ├── Validate
-      └── Produce results
+      â”‚
+      â”œâ”€â”€ Provision if explicitly required
+      â”œâ”€â”€ Process
+      â”œâ”€â”€ Validate
+      â””â”€â”€ Produce results
 
 Separate infrastructure lifecycle operation
-      │
-      └── Explicit terraform destroy
+      â”‚
+      â””â”€â”€ Explicit terraform destroy
 ```
 
 The project will therefore keep the distinction between:
@@ -1516,17 +1516,17 @@ The strategy is therefore:
 
 ```text
 Use AWS when AWS provides learning or architectural value
-                    │
-                    ▼
+                    â”‚
+                    â–¼
             Keep resources small
-                    │
-                    ▼
+                    â”‚
+                    â–¼
           Validate real behavior
-                    │
-                    ▼
+                    â”‚
+                    â–¼
           Capture implementation evidence
-                    │
-                    ▼
+                    â”‚
+                    â–¼
               Destroy resources
 ```
 
@@ -1564,38 +1564,38 @@ The Phase 2 project therefore treats AWS as a reproducible execution and validat
 
 ```text
              LOCAL PROJECT
-        ┌─────────────────────┐
-        │ Code                │
-        │ Terraform           │
-        │ Configuration       │
-        │ Tests               │
-        │ SQL                 │
-        │ Documentation       │
-        │ Evidence            │
-        └──────────┬──────────┘
-                   │
-                   ▼
+        â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+        â”‚ Code                â”‚
+        â”‚ Terraform           â”‚
+        â”‚ Configuration       â”‚
+        â”‚ Tests               â”‚
+        â”‚ SQL                 â”‚
+        â”‚ Documentation       â”‚
+        â”‚ Evidence            â”‚
+        â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                   â”‚
+                   â–¼
           REPRODUCIBLE AWS
             ENVIRONMENT
-                   │
-                   ▼
+                   â”‚
+                   â–¼
              AWS VALIDATION
-                   │
-          ┌────────┴────────┐
-          ▼                 ▼
+                   â”‚
+          â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”
+          â–¼                 â–¼
     Console Inspection   Programmatic
     + Screenshots         Validation
-          │                 │
-          └────────┬────────┘
-                   ▼
+          â”‚                 â”‚
+          â””â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                   â–¼
               DOCUMENT
                RESULTS
-                   │
-                   ▼
+                   â”‚
+                   â–¼
               DESTROY AWS
                RESOURCES
-                   │
-                   ▼
+                   â”‚
+                   â–¼
              RECREATE LATER
              FROM LOCAL PROJECT
 ```
@@ -1608,39 +1608,39 @@ The intended sequence is:
 
 ```text
 Phase 2
-   │
-   ▼
+   â”‚
+   â–¼
 S3 Data Lake Architecture
-   │
-   ▼
+   â”‚
+   â–¼
 Terraform Implementation
-   │
-   ▼
+   â”‚
+   â–¼
 Create AWS Resources
-   │
-   ▼
+   â”‚
+   â–¼
 Upload Domain Datasets
-   │
-   ▼
+   â”‚
+   â–¼
 Programmatic Verification
-   │
-   ▼
+   â”‚
+   â–¼
 AWS Console Inspection
-   │
-   ▼
+   â”‚
+   â–¼
 Screenshots / Evidence
-   │
-   ▼
+   â”‚
+   â–¼
 Documentation
-   │
-   ▼
+   â”‚
+   â–¼
 Destroy AWS Resources
-   │
-   ▼
+   â”‚
+   â–¼
 Recreate Later from Local Project
 ```
 
-The three-layer S3 data-lake architecture will be designed next. The architectural target is **Raw → Standardized → Curated**, but only the resources required for the current milestone will be provisioned initially.
+The three-layer S3 data-lake architecture will be designed next. The architectural target is **Raw â†’ Standardized â†’ Curated**, but only the resources required for the current milestone will be provisioned initially.
 
 ### AWS Data Lake Infrastructure Validation
 
@@ -1785,9 +1785,9 @@ The three standardized domain datasets were uploaded to:
 
 ```text
 s3://mlops-engineering-data-lake-882507341805/standardized/
-├── customer/customer.csv
-├── financial_history/financial_history.csv
-└── loan_application/loan_application.csv
+â”œâ”€â”€ customer/customer.csv
+â”œâ”€â”€ financial_history/financial_history.csv
+â””â”€â”€ loan_application/loan_application.csv
 ```
 
 The original source dataset remained conceptually separate from these standardized domain datasets.
@@ -1938,16 +1938,16 @@ The validated metadata flow is:
 
 ```text
 S3 Standardized Data
-        │
-        ▼
+        â”‚
+        â–¼
 Glue Crawler
-        │
-        ▼
+        â”‚
+        â–¼
 Glue Data Catalog
-        │
-        ├── customer
-        ├── financial_history
-        └── loan_application
+        â”‚
+        â”œâ”€â”€ customer
+        â”œâ”€â”€ financial_history
+        â””â”€â”€ loan_application
 ```
 
 This establishes the metadata/catalog layer required for subsequent Athena-based exploration and validation.
@@ -1962,11 +1962,11 @@ The target infrastructure will include:
 
 ```text
 Terraform
-    │
-    ├── Glue IAM role
-    ├── Glue IAM policies
-    ├── Glue Data Catalog database
-    └── Glue crawler
+    â”‚
+    â”œâ”€â”€ Glue IAM role
+    â”œâ”€â”€ Glue IAM policies
+    â”œâ”€â”€ Glue Data Catalog database
+    â””â”€â”€ Glue crawler
 ```
 
 This separates the initial manual AWS validation from the subsequent infrastructure-as-code implementation.
@@ -2064,14 +2064,14 @@ The resulting logical organization is:
 
 ```text
 mlops-engineering-data-lake-882507341805/
-│
-├── standardized/
-│   ├── customer/customer.csv
-│   ├── financial_history/financial_history.csv
-│   └── loan_application/loan_application.csv
-│
-└── athena-results/
-    └── Athena query result objects
+â”‚
+â”œâ”€â”€ standardized/
+â”‚   â”œâ”€â”€ customer/customer.csv
+â”‚   â”œâ”€â”€ financial_history/financial_history.csv
+â”‚   â””â”€â”€ loan_application/loan_application.csv
+â”‚
+â””â”€â”€ athena-results/
+    â””â”€â”€ Athena query result objects
 ```
 
 #### Athena Console Validation
@@ -2167,30 +2167,30 @@ The complete validated architecture is now:
 
 ```text
 Validated Local Domain Data
-            │
-            ▼
+            â”‚
+            â–¼
         Terraform
-            │
-            ▼
+            â”‚
+            â–¼
       Amazon S3 Data Lake
        standardized/
-            │
-            ▼
+            â”‚
+            â–¼
        Glue Crawler
-            │
-            ▼
+            â”‚
+            â–¼
    Glue Data Catalog
-            │
-            ▼
+            â”‚
+            â–¼
       Amazon Athena
-            │
+            â”‚
        SQL queries
-            │
-            ├── metadata validation
-            ├── row-count validation
-            └── analytical aggregation
-            │
-            ▼
+            â”‚
+            â”œâ”€â”€ metadata validation
+            â”œâ”€â”€ row-count validation
+            â””â”€â”€ analytical aggregation
+            â”‚
+            â–¼
      athena-results/
 ```
 
@@ -2220,37 +2220,37 @@ This implementation established several important engineering principles:
 
 ```text
 1. Source / Domain Design
-   ✓ Complete
+   âœ“ Complete
 
 2. Domain-Level EDA
-   ✓ Complete
+   âœ“ Complete
 
 3. AWS Data Foundation
-   ✓ S3
-   ✓ Glue Data Catalog
-   ✓ Athena CLI validation
-   ✓ Athena Console validation
+   âœ“ S3
+   âœ“ Glue Data Catalog
+   âœ“ Athena CLI validation
+   âœ“ Athena Console validation
 
 4. Source / Ingestion Validation
-   → Next major milestone
+   â†’ Next major milestone
 
 5. Domain Processing / Standardization
-   → Pending
+   â†’ Pending
 
 6. Cross-Domain Integration
-   → Pending
+   â†’ Pending
 
 7. Curated Dataset Validation
-   → Pending
+   â†’ Pending
 
 8. ML Dataset EDA
-   → Pending
+   â†’ Pending
 
 9. ML Preprocessing
-   → Pending
+   â†’ Pending
 
 10. Training-Ready Dataset
-   → Pending
+   â†’ Pending
 ```
 
 The AWS data foundation is therefore considered technically validated before moving into the next Phase 2 milestone.
@@ -2284,9 +2284,9 @@ Each validation rule produces a structured result containing:
 
 The complete validation execution is represented by a `ValidationReport`. Its overall status is derived from the individual rule results:
 
-- any FAIL → overall FAIL
-- otherwise any WARNING → overall WARNING
-- otherwise → PASS
+- any FAIL â†’ overall FAIL
+- otherwise any WARNING â†’ overall WARNING
+- otherwise â†’ PASS
 
 ### Validation Rules Implemented
 
@@ -2327,7 +2327,7 @@ The validators were executed against the actual domain datasets generated during
 
 The results were:
 
-- Customer Profile: FAIL — 2 employment-consistency violations
+- Customer Profile: FAIL â€” 2 employment-consistency violations
 - Financial History: PASS
 - Loan Application: PASS
 
@@ -2388,3 +2388,59 @@ The curated dataset will then require its own validation layer to verify:
 - final dataset quality
 
 Curated-dataset validation is therefore intentionally deferred until the Athena integration has been implemented.
+
+---
+
+## 2026-10-09 â€” Domain Cleaning and Validation Pipelines
+
+### Completed
+
+Implemented a local domain-cleaning and validation foundation for the three credit-risk datasets.
+
+**Domain cleaning**
+- Customer Profile: remove exact duplicate rows, standardize categorical values, and set inconsistent employment lengths to missing.
+- Financial History: remove exact duplicate rows and standardize default-history values.
+- Loan Application: remove exact duplicate rows and standardize loan-purpose and risk-grade values.
+- Preserve legitimate missing values and unusual but potentially valid records.
+- Generate separate JSON cleaning reports.
+- Preserve raw input datasets.
+
+**Domain validation**
+- Implement domain-specific validation rules for all three datasets.
+- Implement a validation orchestrator that reads processed datasets, executes the existing rules, and persists JSON reports separately from cleaning reports.
+- Keep validation read-only and separate from cleaning responsibilities.
+
+### Real-data verification
+
+The cleaning and validation pipelines were executed against the actual processed datasets.
+
+- Customer Profile: 32,581 input rows and 32,581 output rows; 2 inconsistent employment lengths set to missing.
+- Financial History: 32,581 input rows and 32,581 output rows; no cleaning issues reported.
+- Loan Application: 32,581 input rows and 32,581 output rows; 3,116 missing interest rates preserved and reported as a warning.
+- Domain validation: all 18 rules passed across the three datasets.
+- Full automated test suite: 61 tests passed.
+
+Persisted reports:
+
+- `data/processed/cleaning_reports/`
+- `data/processed/validation_reports/`
+
+### Architecture and boundaries
+
+The current implementation is local and uses Python and pandas. It establishes the domain-cleaning and validation logic before cloud integration.
+
+The following work remains separate and is not completed by this milestone:
+
+- AWS execution of the cleaning and validation workflows.
+- Glue Data Catalog integration.
+- Athena-based cross-domain joins and curated dataset creation.
+- Curated dataset validation.
+- SageMaker Processing and ML-specific preprocessing.
+
+### Next steps
+
+1. Review and finalize the Phase 2 documentation.
+2. Review the Git diff and stage the intended implementation, tests, and documentation changes.
+3. Commit and push the completed local domain-cleaning and validation milestone.
+4. Plan Athena integration as a separate next step.
+5.
