@@ -2443,4 +2443,77 @@ The following work remains separate and is not completed by this milestone:
 2. Review the Git diff and stage the intended implementation, tests, and documentation changes.
 3. Commit and push the completed local domain-cleaning and validation milestone.
 4. Plan Athena integration as a separate next step.
-5.
+
+---
+
+## 2026-10-13 — AWS Data Lake Integration and Curated Dataset Generation
+
+### Completed
+
+Implemented and verified the AWS data-foundation infrastructure and ETL workflow for the three credit-risk datasets, using Terraform to manage the cloud resources.
+
+**\*\*Terraform infrastructure\*\***
+
+- Validated the Terraform configuration successfully.
+- Reviewed the execution plan before applying infrastructure changes.
+- Created the Glue Data Catalog table for the curated loan-risk dataset through Terraform.
+- Applied the configuration successfully, adding the catalog table without changing or destroying existing resources.
+- Configured the AWS environment in `us-east-2` (Ohio).
+
+**\*\*AWS Glue ETL\*\***
+
+- Executed the existing Glue ETL job, `mlops-curate-loan-dataset`.
+- Successfully generated the curated loan-risk dataset from the standardized source datasets.
+- Configured the ETL job to write its output to the designated S3 curated-data prefix.
+- Verified a successful Glue job run.
+- Registered the curated dataset in the Glue Data Catalog so it could be queried through Athena.
+
+**\*\*Curated dataset\*\***
+
+- Generated the curated CSV dataset at:
+
+  `s3://mlops-engineering-data-lake-882507341805/curated/loan_risk_dataset/`
+
+- Defined the curated table with 14 columns covering application identifiers, loan characteristics, customer attributes, credit history, and loan outcome.
+- Preserved `loan_outcome` as the target variable and `application_id` as an identifier rather than a model feature.
+
+### Real-data verification
+
+The AWS ETL workflow was executed against the actual standardized datasets.
+
+- Customer dataset: 32,581 rows.
+- Financial history dataset: 32,581 rows.
+- Loan application dataset: 32,581 rows.
+- Glue ETL job: successful execution.
+- Curated output: generated and stored in Amazon S3.
+- Glue Data Catalog: curated dataset table created successfully through Terraform.
+- Athena verification: **32,581 rows** returned by the curated-table row-count query.
+- Terraform validation: successful.
+- Terraform apply: completed successfully, with 1 resource added, 0 changed, and 0 destroyed.
+
+The following evidence was captured during verification:
+
+- Successful Glue ETL job run.
+- Curated dataset present in the S3 output prefix.
+- Athena row-count query confirming 32,581 curated records.
+- Terraform validation and deployment results.
+
+### Architecture and boundaries
+
+The current implementation extends the local data-cleaning and validation foundation into AWS. Terraform manages the infrastructure, AWS Glue executes the curation logic, Amazon S3 stores the curated output, Glue Data Catalog provides table metadata, and Athena supports SQL-based verification.
+
+The current workflow is **functional and reproducible, but its automatic launch has not been implemented or verified**. The ETL job was executed successfully, but no Glue trigger, CloudWatch Events/EventBridge rule, or EventBridge Scheduler resource was found in the Terraform configuration reviewed.
+
+The following work remains separate and is not completed by this milestone:
+
+- Automatic or scheduled ETL job execution.
+- Curated dataset validation beyond the row-count verification completed in Athena.
+- SageMaker Processing and ML-specific preprocessing.
+- Subsequent model training and deployment workflows.
+
+### Next steps
+
+1. Finalize the Phase 2 documentation and preserve the screenshots captured during today's verification.
+2. Review the Terraform-managed resources and destroy the AWS infrastructure created for this working session, verifying that destruction completes successfully to minimize ongoing costs.
+3. Rebuild the environment in the next session using the Terraform configuration and repeat the required workflow verification.
+4. Continue with the remaining Phase 2 tasks according to the roadmap, keeping automatic ETL scheduling as a separate task if required by the project scope.
