@@ -2517,3 +2517,70 @@ The following work remains separate and is not completed by this milestone:
 2. Review the Terraform-managed resources and destroy the AWS infrastructure created for this working session, verifying that destruction completes successfully to minimize ongoing costs.
 3. Rebuild the environment in the next session using the Terraform configuration and repeat the required workflow verification.
 4. Continue with the remaining Phase 2 tasks according to the roadmap, keeping automatic ETL scheduling as a separate task if required by the project scope.
+## 2026-10-14 — ML Data Contract and Data Foundation Verification
+
+### Completed
+
+Continued validating the AWS data foundation and documenting the curated loan-risk dataset for the upcoming ML data-processing workflow.
+
+**\*\*Terraform infrastructure and AWS resources\*\***
+
+- Confirmed the previous Terraform validation and apply results from October 13.
+- The Terraform apply added the Glue Data Catalog table, with 1 resource added, 0 changed, and 0 destroyed.
+- AWS resources are configured in `us-east-2` (Ohio).
+- Automatic ETL triggering remains unimplemented or unverified based on the Terraform configuration reviewed previously.
+
+**\*\*AWS Glue ETL and curated dataset\*\***
+
+- Confirmed the successful execution of the existing Glue ETL job, `mlops-curate-loan-dataset`.
+- Verified that the curated loan-risk dataset was generated and stored in Amazon S3.
+- Confirmed the curated output location:
+
+  `s3://mlops-engineering-data-lake-882507341805/curated/loan_risk_dataset/`
+
+- Confirmed that the curated dataset contains 32,581 records and 14 columns.
+- Verified that the curated dataset is registered in the Glue Data Catalog and accessible through Athena.
+- Reviewed the existing domain-decomposition and validation implementation.
+
+**\*\*ML data contract\*\***
+
+- Updated the existing ML Data Contract documentation.
+- Documented the curated dataset schema, candidate predictive features, target variable, identifiers, and feature exclusions.
+- Established the target semantics: `loan_outcome = 0` represents non-default and `loan_outcome = 1` represents default.
+- Documented the current validation evidence, outstanding data-quality questions, and requirements before model training.
+- Identified feature availability and potential leakage risks that must be investigated before finalizing the predictive feature set.
+
+**\*\*Validation evidence\*\***
+
+- Confirmed that the customer, financial-history, and loan-application domain datasets each contain 32,581 rows.
+- Confirmed that the curated-table row-count query in Athena returned 32,581 records.
+- Confirmed that the curated dataset has 14 columns.
+- Reviewed the existing domain-validation tests; 10 tests passed across `test_validation.py` and `test_validation_pipeline.py`.
+- Captured AWS Console evidence for the Glue ETL execution, curated S3 dataset, Glue Data Catalog, and Athena verification.
+
+### Architecture and boundaries
+
+The current implementation extends the local data-cleaning and domain-validation foundation into AWS. Terraform manages the infrastructure changes applied so far, AWS Glue executes the curation logic, Amazon S3 stores the curated output, Glue Data Catalog provides table metadata, and Athena supports SQL-based verification.
+
+The domain-to-curated transformation has been executed successfully against the standardized datasets. However, **successful ETL execution does not establish that the entire workflow launches automatically**. Automatic or scheduled execution remains unimplemented or unverified based on the configuration reviewed so far.
+
+The current curated dataset is available for the next stage of ML data preparation. The Glue Data Catalog currently exposes its 14 columns as strings, so downstream processing must explicitly parse and validate logical data types.
+
+The following work remains separate and is not completed by this milestone:
+
+- Automatic or scheduled ETL execution, if required by the project scope.
+- SageMaker Processing and reusable ML-specific preprocessing.
+- Training-ready dataset generation and integrated ML data validation.
+- Dataset versioning, metadata, reproducibility, and lineage.
+- DVC/S3 versioning demonstration.
+- Final architecture documentation, README updates, and Phase 02 completion checks.
+
+### Next steps
+
+1. Review the current Git working-tree status and identify the actual changes to commit.
+2. Commit and push the completed documentation changes without staging unrelated modifications.
+3. Continue with Engineering Work 4.3 — Data Processing, following the Phase 02 Blueprint and the local-first, cloud-validation-second strategy.
+4. Define the preprocessing workflow's input and output contracts and implement and test the transformations locally.
+5. Integrate ML-specific data validation into the processing workflow before moving the implementation to SageMaker Processing.
+6. Address dataset versioning, metadata, lineage, and reproducibility in the subsequent Engineering Work 4.5.
+7. Verify the Terraform configuration and ETL execution mechanism before declaring automatic end-to-end orchestration complete.
