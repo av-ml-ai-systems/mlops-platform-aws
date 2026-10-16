@@ -1,0 +1,25 @@
+﻿datasets:
+  loan_risk_dataset:
+    version: "1.0.0"
+    status: "curated"
+    created_at: "2026-10-16"
+    artifact:
+      path: "Data/processed/loan_risk_dataset/loan_risk_dataset.csv"
+      format: "csv"
+      rows: 32581
+      columns: 14
+      exact_duplicate_rows: 0
+      sha256: "241AFC8D5377EB6A358DCEE13710F7921955BA7896A7D89109FCB3315FE99CFF"
+    target:
+      column: "loan_outcome"
+      meaning: "0 = non-default, 1 = default"
+    lineage:
+      source_prefix: "s3://mlops-engineering-data-lake-882507341805/standardized/"
+      transformation: "AWS Glue ETL"
+      glue_job: "mlops-curate-loan-dataset"
+      output_prefix: "s3://mlops-engineering-data-lake-882507341805/curated/loan_risk_dataset/"
+    validation:
+      athena_row_count: 32581
+      local_row_count: 32581
+      row_counts_match: true
+      exact_duplicate_rows: 0
