@@ -4,7 +4,8 @@
 
 # Creates the physical S3 bucket that acts as the data lake.
 resource "aws_s3_bucket" "mlops_data_lake" {
-  bucket = "mlops-engineering-data-lake-882507341805"
+  bucket        = "mlops-engineering-data-lake-882507341805"
+  force_destroy = true
 
   tags = {
     Name        = "MLOps Engineering Data Lake"
@@ -194,9 +195,9 @@ resource "aws_glue_crawler" "standardized_data" {
 
 # Creates the dedicated Athena workgroup for Data Foundation queries.
 resource "aws_athena_workgroup" "mlops_data_foundation" {
-  name        = "mlops-data-foundation"
-  description = "Athena queries for the MLOps ML Data Foundation milestone"
-  state       = "ENABLED"
+  name          = "mlops-data-foundation"
+  description   = "Athena queries for the MLOps ML Data Foundation milestone"
+  state         = "ENABLED"
 
   configuration {
     # Enforces this workgroup's query-result and encryption settings.

@@ -1,27 +1,34 @@
 # ---------------------------------------------------------------------
-# AWS Glue ETL — Curated Loan Risk Dataset
+# AWS Glue ETL - Curated Loan Risk Dataset
 # ---------------------------------------------------------------------
 
-# Uploads the Glue ETL script to S3 so the managed Glue runtime can execute it.
+variable "curated_loan_risk_dataset_version" {
+  description = "Immutable curated dataset version queried by Athena."
+  type        = string
+  default     = "1.0.1"
+
+  validation {
+    condition     = can(regex("^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$", var.curated_loan_risk_dataset_version))
+    error_message = "Use 1-64 letters, numbers, dots, underscores, or hyphens; start with a letter or number."
+  }
+}
+
+# Uploads the Glue ETL script to S3.
 resource "aws_s3_object" "glue_curate_loan_dataset_script" {
   bucket = aws_s3_bucket.mlops_data_lake.id
   key    = "scripts/glue/curate_loan_dataset.py"
 
-  # Resolves the script location relative to the Terraform directory.
   source = "${path.root}/../../scripts/glue/curate_loan_dataset.py"
 
-  # Detects local script changes so Terraform can update the uploaded object.
   source_hash = filemd5(
     "${path.root}/../../scripts/glue/curate_loan_dataset.py"
   )
 }
 
 # Creates a dedicated IAM role for the Glue ETL job.
-# This keeps ETL permissions separate from the existing crawler role.
 resource "aws_iam_role" "glue_etl" {
   name = "MLOpsGlueETLRole"
 
-  # Allows the AWS Glue service to assume this role when running the job.
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
 
@@ -37,17 +44,14 @@ resource "aws_iam_role" "glue_etl" {
   })
 }
 
-# Grants the role standard permissions needed to operate an AWS Glue job,
-# including access to Glue-related operational services.
+# Attaches standard Glue service permissions.
 resource "aws_iam_role_policy_attachment" "glue_etl_service_role" {
-  role = aws_iam_role.glue_etl.name
-
+  role       = aws_iam_role.glue_etl.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
 }
 
 # Defines the S3 permissions required by the ETL job.
 data "aws_iam_policy_document" "glue_etl_s3_access" {
-  # Allows listing only the S3 prefixes required by this ETL job.
   statement {
     sid    = "ListRequiredS3Prefixes"
     effect = "Allow"
@@ -70,12 +74,13 @@ data "aws_iam_policy_document" "glue_etl_s3_access" {
         "scripts/glue",
         "scripts/glue/*",
         "curated/loan_risk_dataset",
-        "curated/loan_risk_dataset/*"
+        "curated/loan_risk_dataset/versions/*",
+        "metadata/versions/loan_risk_dataset/*"
       ]
     }
   }
 
-  # Allows reading the three standardized datasets.
+  # Reads standardized source datasets.
   statement {
     sid    = "ReadStandardizedDatasets"
     effect = "Allow"
@@ -89,7 +94,7 @@ data "aws_iam_policy_document" "glue_etl_s3_access" {
     ]
   }
 
-  # Allows Glue to download its ETL script from S3.
+  # Reads the Glue ETL script.
   statement {
     sid    = "ReadGlueETLScript"
     effect = "Allow"
@@ -103,64 +108,83 @@ data "aws_iam_policy_document" "glue_etl_s3_access" {
     ]
   }
 
-  # Allows writing curated output and replacing objects under the
-  # dedicated curated prefix when the job uses overwrite mode.
+  # Reads published CSV objects to calculate artifact hashes.
   statement {
-    sid    = "WriteCuratedDataset"
+    sid    = "ReadPublishedCuratedArtifacts"
+    effect = "Allow"
+
+    actions = [
+      "s3:GetObject"
+    ]
+
+    resources = [
+      "${aws_s3_bucket.mlops_data_lake.arn}/curated/loan_risk_dataset/versions/*"
+    ]
+  }
+
+  # Writes new curated versions without granting object deletion.
+  statement {
+    sid    = "WriteCuratedVersions"
     effect = "Allow"
 
     actions = [
       "s3:PutObject",
-      "s3:DeleteObject",
       "s3:AbortMultipartUpload"
     ]
 
     resources = [
-      "${aws_s3_bucket.mlops_data_lake.arn}/curated/loan_risk_dataset/*"
+      "${aws_s3_bucket.mlops_data_lake.arn}/curated/loan_risk_dataset/versions/*"
+    ]
+  }
+
+  # Writes version metadata; conditional writes protect existing records.
+  statement {
+    sid    = "WriteDatasetVersionMetadata"
+    effect = "Allow"
+
+    actions = [
+      "s3:PutObject"
+    ]
+
+    resources = [
+      "${aws_s3_bucket.mlops_data_lake.arn}/metadata/versions/loan_risk_dataset/*"
     ]
   }
 }
 
-# Attaches the restricted S3 permissions to the dedicated Glue ETL role.
+# Attaches the restricted S3 policy to the dedicated Glue role.
 resource "aws_iam_role_policy" "glue_etl_s3_access" {
-  name = "MLOpsGlueETLS3Access"
-  role = aws_iam_role.glue_etl.id
-
+  name   = "MLOpsGlueETLS3Access"
+  role   = aws_iam_role.glue_etl.id
   policy = data.aws_iam_policy_document.glue_etl_s3_access.json
 }
 
-# Defines the managed AWS Glue Spark job that creates the curated dataset.
+# Defines the managed AWS Glue Spark job.
 resource "aws_glue_job" "curate_loan_dataset" {
   name        = "mlops-curate-loan-dataset"
   description = "Integrates standardized domains into a curated loan-risk dataset."
 
-  # Supplies the IAM role Glue assumes to access S3 and run the job.
   role_arn = aws_iam_role.glue_etl.arn
 
-  # Uses AWS Glue 5.0 with two small G.1X workers for this dataset.
   glue_version      = "5.0"
   worker_type       = "G.1X"
   number_of_workers = 2
 
-  # Limits the job runtime and disables automatic retries during initial validation.
   timeout     = 15
   max_retries = 0
 
-  # Identifies the Python Spark ETL script stored in S3.
   command {
     name            = "glueetl"
     script_location = "s3://${aws_s3_bucket.mlops_data_lake.bucket}/${aws_s3_object.glue_curate_loan_dataset_script.key}"
     python_version  = "3"
   }
 
-  # Enables job metrics and continuous CloudWatch logging for troubleshooting.
   default_arguments = {
     "--job-language"                     = "python"
     "--enable-metrics"                   = "true"
     "--enable-continuous-cloudwatch-log" = "true"
   }
 
-  # Ensures the required IAM policies are attached before the job is created.
   depends_on = [
     aws_iam_role_policy_attachment.glue_etl_service_role,
     aws_iam_role_policy.glue_etl_s3_access
@@ -168,7 +192,7 @@ resource "aws_glue_job" "curate_loan_dataset" {
 }
 
 # ---------------------------------------------------------------------
-# Glue Data Catalog — Curated Loan Risk Dataset
+# Glue Data Catalog - Curated Loan Risk Dataset
 # ---------------------------------------------------------------------
 
 resource "aws_glue_catalog_table" "curated_loan_risk_dataset" {
@@ -177,12 +201,13 @@ resource "aws_glue_catalog_table" "curated_loan_risk_dataset" {
   table_type    = "EXTERNAL_TABLE"
 
   parameters = {
-    EXTERNAL              = "TRUE"
+    EXTERNAL                 = "TRUE"
     "skip.header.line.count" = "1"
   }
 
   storage_descriptor {
-    location      = "s3://${aws_s3_bucket.mlops_data_lake.bucket}/curated/loan_risk_dataset/"
+    location = "s3://${aws_s3_bucket.mlops_data_lake.bucket}/curated/loan_risk_dataset/versions/${var.curated_loan_risk_dataset_version}/"
+
     input_format  = "org.apache.hadoop.mapred.TextInputFormat"
     output_format = "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"
 
