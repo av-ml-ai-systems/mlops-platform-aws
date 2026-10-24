@@ -198,6 +198,7 @@ resource "aws_athena_workgroup" "mlops_data_foundation" {
   name          = "mlops-data-foundation"
   description   = "Athena queries for the MLOps ML Data Foundation milestone"
   state         = "ENABLED"
+  force_destroy = true
 
   configuration {
     # Enforces this workgroup's query-result and encryption settings.
