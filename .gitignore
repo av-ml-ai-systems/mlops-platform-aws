@@ -70,3 +70,7 @@ logs/
 req.txt
 env_workflow.txt
 docs/Phase-02/phase-evolution.md
+
+# Phase 03 - Local working documents
+docs/phase-03/working/phase-03-evolution.md
+docs/phase-03/working/phase-03-milestone-tracker.md
