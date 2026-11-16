@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Enterprise MLOps engineering platform for production machine learning systems"
 readme = "README.md"
 authors = [
-    { name = "Javier-DataScience", email = "alvaro.vega.vargas@gmail.com" }
+    { name = "av-ml-ai-systems", email = "alvaro.vega.vargas@gmail.com" }
 ]
 requires-python = ">=3.12"
 dependencies = [
